@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
@@ -32,56 +33,63 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange }) => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [hasData, setHasData] = useState(false);
 
-  // Sample business metrics data
-  const metrics = [
+  // Empty state metrics for new businesses
+  const emptyMetrics = [
     {
       title: 'Sales This Month',
-      value: '₹2,45,000',
-      change: '+12.5%',
-      trend: 'up' as const,
+      value: '₹0',
+      change: '--',
+      trend: 'neutral' as const,
       icon: TrendingUp,
-      color: 'text-green-400'
+      color: 'text-muted-foreground',
+      isEmpty: true
     },
     {
       title: 'Purchases This Month', 
-      value: '₹1,85,000',
-      change: '+8.2%',
-      trend: 'up' as const,
+      value: '₹0',
+      change: '--',
+      trend: 'neutral' as const,
       icon: Package,
-      color: 'text-blue-400'
+      color: 'text-muted-foreground',
+      isEmpty: true
     },
     {
       title: 'Payments Received',
-      value: '₹1,98,000',
-      change: '+15.3%',
-      trend: 'up' as const,
+      value: '₹0',
+      change: '--',
+      trend: 'neutral' as const,
       icon: DollarSign,
-      color: 'text-green-400'
+      color: 'text-muted-foreground',
+      isEmpty: true
     },
     {
       title: 'Outstanding Dues',
-      value: '₹47,000',
-      change: '-5.8%',
-      trend: 'down' as const,
+      value: '₹0',
+      change: '--',
+      trend: 'neutral' as const,
       icon: TrendingDown,
-      color: 'text-red-400'
+      color: 'text-muted-foreground',
+      isEmpty: true
     },
     {
       title: 'Total Customers',
-      value: '148',
-      change: '+3',
-      trend: 'up' as const,
+      value: '0',
+      change: '--',
+      trend: 'neutral' as const,
       icon: Users,
-      color: 'text-primary'
+      color: 'text-muted-foreground',
+      isEmpty: true
     },
     {
       title: 'GST Payable',
-      value: '₹18,500',
-      change: 'Due in 5 days',
+      value: '₹0',
+      change: 'No data',
       trend: 'neutral' as const,
       icon: AlertCircle,
-      color: 'text-yellow-400'
+      color: 'text-muted-foreground',
+      isEmpty: true
     }
   ];
 
@@ -113,7 +121,9 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
               className="relative"
             >
               <AlertCircle className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs"></span>
+              {!hasData && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-muted rounded-full"></span>
+              )}
             </Button>
             
             <Button variant="ghost" size="sm">
@@ -125,11 +135,29 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
 
       {/* Main Content */}
       <main className="pt-16 pb-20 px-4 space-y-6">
+        {/* Welcome Message for New Users */}
+        {!hasData && (
+          <div className="bg-card/40 border border-border/50 rounded-xl p-4 mb-6">
+            <h3 className="text-lg font-semibold text-foreground mb-2">Welcome to BizTrack!</h3>
+            <p className="text-muted-foreground text-sm mb-3">
+              Start by creating your first sale or purchase to see your business metrics come alive.
+            </p>
+            <Button 
+              size="sm" 
+              onClick={() => setShowQuickActions(true)}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Get Started
+            </Button>
+          </div>
+        )}
+
         {/* KPI Metrics Cards */}
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Business Overview</h2>
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-            {metrics.map((metric, index) => (
+            {emptyMetrics.map((metric, index) => (
               <MetricCard
                 key={index}
                 title={metric.title}
@@ -138,16 +166,17 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
                 trend={metric.trend}
                 icon={metric.icon}
                 color={metric.color}
+                isEmpty={metric.isEmpty}
               />
             ))}
           </div>
         </section>
 
         {/* Charts Section */}
-        <ChartSection />
+        <ChartSection isEmpty={!hasData} />
 
         {/* Recent Activity */}
-        <ActivityFeed />
+        <ActivityFeed isEmpty={!hasData} />
       </main>
 
       {/* Fixed Bottom Navigation */}
@@ -170,12 +199,14 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       <QuickActions 
         isOpen={showQuickActions}
         onToggle={() => setShowQuickActions(!showQuickActions)}
+        isEmpty={!hasData}
       />
 
       {/* Alerts Panel */}
       <AlertsPanel 
         isOpen={showAlerts}
         onClose={() => setShowAlerts(false)}
+        isEmpty={!hasData}
       />
     </div>
   );

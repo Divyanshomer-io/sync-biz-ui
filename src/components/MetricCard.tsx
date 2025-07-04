@@ -9,6 +9,7 @@ interface MetricCardProps {
   trend: 'up' | 'down' | 'neutral';
   icon: LucideIcon;
   color: string;
+  isEmpty?: boolean;
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({
@@ -17,9 +18,11 @@ const MetricCard: React.FC<MetricCardProps> = ({
   change,
   trend,
   icon: Icon,
-  color
+  color,
+  isEmpty = false
 }) => {
   const getTrendColor = () => {
+    if (isEmpty) return 'text-muted-foreground';
     switch (trend) {
       case 'up': return 'text-green-400';
       case 'down': return 'text-red-400';
@@ -28,9 +31,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   return (
-    <div className="metric-card min-w-[280px] sm:min-w-[320px]">
+    <div className={`metric-card min-w-[280px] sm:min-w-[320px] ${isEmpty ? 'opacity-70' : ''}`}>
       <div className="flex items-center justify-between mb-3">
-        <div className={`p-2 rounded-lg bg-current/10 ${color}`}>
+        <div className={`p-2 rounded-lg bg-current/10 ${color} ${isEmpty ? 'opacity-50' : ''}`}>
           <Icon className={`w-6 h-6 ${color}`} />
         </div>
         <span className={`text-sm font-medium ${getTrendColor()}`}>
@@ -39,8 +42,13 @@ const MetricCard: React.FC<MetricCardProps> = ({
       </div>
       
       <div className="space-y-1">
-        <p className="text-2xl font-bold text-foreground">{value}</p>
+        <p className={`text-2xl font-bold ${isEmpty ? 'text-muted-foreground' : 'text-foreground'}`}>
+          {value}
+        </p>
         <p className="text-sm text-muted-foreground">{title}</p>
+        {isEmpty && (
+          <p className="text-xs text-muted-foreground/70">No data yet</p>
+        )}
       </div>
     </div>
   );
