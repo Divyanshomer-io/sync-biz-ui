@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Dashboard from '@/components/Dashboard';
 import SalesManagement from '@/components/sales/SalesManagement';
 
@@ -10,6 +10,23 @@ const Index = () => {
     setActiveSection(section);
     console.log(`Navigating to ${section} section`);
   };
+
+  // Listen for navigation events from QuickActions
+  useEffect(() => {
+    const handleNavigateToSales = () => setActiveSection('sales');
+    const handleNavigateToReports = () => setActiveSection('reports');
+    const handleNavigateToSettings = () => setActiveSection('settings');
+
+    window.addEventListener('navigate-to-sales', handleNavigateToSales);
+    window.addEventListener('navigate-to-reports', handleNavigateToReports);
+    window.addEventListener('navigate-to-settings', handleNavigateToSettings);
+
+    return () => {
+      window.removeEventListener('navigate-to-sales', handleNavigateToSales);
+      window.removeEventListener('navigate-to-reports', handleNavigateToReports);
+      window.removeEventListener('navigate-to-settings', handleNavigateToSettings);
+    };
+  }, []);
 
   const renderContent = () => {
     switch (activeSection) {

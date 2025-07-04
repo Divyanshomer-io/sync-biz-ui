@@ -12,32 +12,38 @@ interface QuickActionsProps {
 const QuickActions: React.FC<QuickActionsProps> = ({ isOpen, onToggle, isEmpty = false }) => {
   const actions = [
     {
-      id: 'invoice',
-      label: 'New Invoice',
+      id: 'sales',
+      label: 'Go to Sales',
       icon: Receipt,
       color: 'bg-green-500 hover:bg-green-600',
-      action: () => console.log('New Invoice')
+      action: () => {
+        window.dispatchEvent(new CustomEvent('navigate-to-sales'));
+      }
     },
     {
       id: 'purchase',
       label: 'Add Purchase',
       icon: Package,
       color: 'bg-blue-500 hover:bg-blue-600',
-      action: () => console.log('Add Purchase')
+      action: () => console.log('Add Purchase - Coming Soon')
     },
     {
-      id: 'payment',
-      label: 'Record Payment',
+      id: 'reports',
+      label: 'View Reports',
       icon: CreditCard,
       color: 'bg-purple-500 hover:bg-purple-600',
-      action: () => console.log('Record Payment')
+      action: () => {
+        window.dispatchEvent(new CustomEvent('navigate-to-reports'));
+      }
     },
     {
-      id: 'customer',
-      label: 'Add Customer',
+      id: 'settings',
+      label: 'Settings',
       icon: UserPlus,
       color: 'bg-orange-500 hover:bg-orange-600',
-      action: () => console.log('Add Customer')
+      action: () => {
+        window.dispatchEvent(new CustomEvent('navigate-to-settings'));
+      }
     }
   ];
 

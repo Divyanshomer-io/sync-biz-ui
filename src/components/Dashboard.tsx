@@ -12,10 +12,7 @@ import {
   DollarSign,
   Users,
   AlertCircle,
-  Plus,
-  Receipt,
-  CreditCard,
-  UserPlus
+  Plus
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,12 +32,18 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
   const [showAlerts, setShowAlerts] = useState(false);
   const [hasData, setHasData] = useState(false);
 
-  // Empty state metrics for new businesses
+  // Check if we have any real business data
+  useEffect(() => {
+    // In a real app, this would check actual data from backend
+    // For now, we'll assume no data since we removed the mock data
+    setHasData(false);
+  }, []);
+
   const emptyMetrics = [
     {
       title: 'Sales This Month',
       value: '₹0',
-      change: '--',
+      change: 'Start selling',
       trend: 'neutral' as const,
       icon: TrendingUp,
       color: 'text-muted-foreground',
@@ -49,7 +52,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
     {
       title: 'Purchases This Month', 
       value: '₹0',
-      change: '--',
+      change: 'No purchases yet',
       trend: 'neutral' as const,
       icon: Package,
       color: 'text-muted-foreground',
@@ -58,7 +61,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
     {
       title: 'Payments Received',
       value: '₹0',
-      change: '--',
+      change: 'No payments yet',
       trend: 'neutral' as const,
       icon: DollarSign,
       color: 'text-muted-foreground',
@@ -67,7 +70,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
     {
       title: 'Outstanding Dues',
       value: '₹0',
-      change: '--',
+      change: 'No dues pending',
       trend: 'neutral' as const,
       icon: TrendingDown,
       color: 'text-muted-foreground',
@@ -76,7 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
     {
       title: 'Total Customers',
       value: '0',
-      change: '--',
+      change: 'Add customers',
       trend: 'neutral' as const,
       icon: Users,
       color: 'text-muted-foreground',
@@ -85,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
     {
       title: 'GST Payable',
       value: '₹0',
-      change: 'No data',
+      change: 'No GST due',
       trend: 'neutral' as const,
       icon: AlertCircle,
       color: 'text-muted-foreground',
@@ -140,15 +143,15 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
           <div className="bg-card/40 border border-border/50 rounded-xl p-4 mb-6">
             <h3 className="text-lg font-semibold text-foreground mb-2">Welcome to BizTrack!</h3>
             <p className="text-muted-foreground text-sm mb-3">
-              Start by creating your first sale or purchase to see your business metrics come alive.
+              Start by going to Sales section to create your first customer and sale.
             </p>
             <Button 
               size="sm" 
-              onClick={() => setShowQuickActions(true)}
+              onClick={() => onSectionChange('sales')}
               className="bg-primary hover:bg-primary/90"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Get Started
+              Go to Sales
             </Button>
           </div>
         )}
