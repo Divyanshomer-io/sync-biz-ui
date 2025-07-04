@@ -169,7 +169,7 @@ const CustomerValidationModal: React.FC<CustomerValidationModalProps> = ({
                       </Button>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             )}
 
