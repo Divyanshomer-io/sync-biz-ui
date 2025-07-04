@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 interface QuickActionsProps {
   isOpen: boolean;
   onToggle: () => void;
+  isEmpty?: boolean;
 }
 
-const QuickActions: React.FC<QuickActionsProps> = ({ isOpen, onToggle }) => {
+const QuickActions: React.FC<QuickActionsProps> = ({ isOpen, onToggle, isEmpty = false }) => {
   const actions = [
     {
       id: 'invoice',

@@ -5,7 +5,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Users, PieChart as PieChartIcon } from 'lucide-react';
 
-const ChartSection: React.FC = () => {
+interface ChartSectionProps {
+  isEmpty?: boolean;
+}
+
+const ChartSection: React.FC<ChartSectionProps> = ({ isEmpty = false }) => {
   const [activeChart, setActiveChart] = useState('sales');
 
   // Sample business data
@@ -39,6 +43,17 @@ const ChartSection: React.FC = () => {
   ];
 
   const renderChart = () => {
+    if (isEmpty) {
+      return (
+        <div className="h-64 flex items-center justify-center text-muted-foreground">
+          <div className="text-center space-y-2">
+            <div className="text-4xl opacity-50">📊</div>
+            <p>Charts will appear once you have data</p>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeChart) {
       case 'sales':
         return (

@@ -2,7 +2,11 @@
 import React from 'react';
 import { Receipt, CreditCard, Package, Users, Clock } from 'lucide-react';
 
-const ActivityFeed: React.FC = () => {
+interface ActivityFeedProps {
+  isEmpty?: boolean;
+}
+
+const ActivityFeed: React.FC<ActivityFeedProps> = ({ isEmpty = false }) => {
   const activities = [
     {
       id: 1,
@@ -79,6 +83,23 @@ const ActivityFeed: React.FC = () => {
         return status;
     }
   };
+
+  if (isEmpty) {
+    return (
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
+        </div>
+        <div className="text-center py-12 text-muted-foreground">
+          <div className="space-y-3">
+            <div className="text-4xl opacity-50">📋</div>
+            <p className="text-lg font-medium">No activity yet</p>
+            <p className="text-sm">Your recent transactions will appear here</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-4">

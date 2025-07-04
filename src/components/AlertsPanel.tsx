@@ -7,9 +7,10 @@ import { Card } from '@/components/ui/card';
 interface AlertsPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  isEmpty?: boolean;
 }
 
-const AlertsPanel: React.FC<AlertsPanelProps> = ({ isOpen, onClose }) => {
+const AlertsPanel: React.FC<AlertsPanelProps> = ({ isOpen, onClose, isEmpty = false }) => {
   const alerts = [
     {
       id: 1,
@@ -82,39 +83,49 @@ const AlertsPanel: React.FC<AlertsPanelProps> = ({ isOpen, onClose }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {alerts.map((alert) => (
-            <Card 
-              key={alert.id} 
-              className={`p-4 border-l-4 ${getPriorityColor(alert.priority)} transition-all duration-200 hover:bg-card/80`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <alert.icon className="w-5 h-5 text-primary" />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-foreground mb-1">
-                    {alert.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {alert.message}
-                  </p>
-                  <span className="text-xs text-muted-foreground">
-                    {alert.time}
-                  </span>
-                </div>
+          {isEmpty ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <div className="space-y-3">
+                <div className="text-4xl opacity-50">🔔</div>
+                <p className="text-lg font-medium">No notifications</p>
+                <p className="text-sm">Alerts and reminders will appear here</p>
               </div>
+            </div>
+          ) : (
+            alerts.map((alert) => (
+              <Card 
+                key={alert.id} 
+                className={`p-4 border-l-4 ${getPriorityColor(alert.priority)} transition-all duration-200 hover:bg-card/80`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <alert.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-foreground mb-1">
+                      {alert.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {alert.message}
+                    </p>
+                    <span className="text-xs text-muted-foreground">
+                      {alert.time}
+                    </span>
+                  </div>
+                </div>
 
-              <div className="flex gap-2 mt-3">
-                <Button size="sm" variant="outline" className="text-xs">
-                  Mark as Read
-                </Button>
-                <Button size="sm" className="text-xs">
-                  Take Action
-                </Button>
-              </div>
-            </Card>
-          ))}
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" variant="outline" className="text-xs">
+                    Mark as Read
+                  </Button>
+                  <Button size="sm" className="text-xs">
+                    Take Action
+                  </Button>
+                </div>
+              </Card>
+            ))
+          )}
         </div>
 
         <div className="p-4 border-t border-border">
