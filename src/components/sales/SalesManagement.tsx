@@ -20,19 +20,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CustomerSelector from './CustomerSelector';
+import CustomerInfoPanel from './CustomerInfoPanel';
 import SalesInvoiceList from './SalesInvoiceList';
 import CreateSaleModal from './CreateSaleModal';
 import PaymentModal from './PaymentModal';
 import CustomerAnalytics from './CustomerAnalytics';
+import { useToast } from '@/hooks/use-toast';
 
 const SalesManagement: React.FC = () => {
+  const { toast } = useToast();
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [showCreateSale, setShowCreateSale] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Mock customer data - in real app this would come from database
-  const customers = [
+  const [customers, setCustomers] = useState([
     {
       id: 1,
       name: 'Rajesh Enterprises',
@@ -45,18 +48,101 @@ const SalesManagement: React.FC = () => {
       pending: 30000,
       unitPreference: 'kg'
     }
-  ];
+  ]);
+
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
 
   const handleCustomerSelect = (customer: any) => {
     setSelectedCustomer(customer);
   };
 
+  const handleCustomerCreated = (newCustomer: any) => {
+    setCustomers(prev => [...prev, newCustomer]);
+    toast({
+      title: "Success",
+      description: "Customer created successfully!"
+    });
+  };
+
   const handleCreateSale = () => {
+    if (!selectedCustomer) {
+      toast({
+        title: "No Customer Selected",
+        description: "Please select a customer first",
+        variant: "destructive"
+      });
+      return;
+    }
     setShowCreateSale(true);
   };
 
   const handleAddPayment = () => {
+    if (!selectedCustomer) {
+      toast({
+        title: "No Customer Selected",
+        description: "Please select a customer first",
+        variant: "destructive"
+      });
+      return;
+    }
     setShowPaymentModal(true);
+  };
+
+  const handleInvoiceCreated = (invoice: any) => {
+    setInvoices(prev => [...prev, invoice]);
+    
+    // Update customer totals
+    setCustomers(prev => prev.map(customer => {
+      if (customer.id === selectedCustomer.id) {
+        const newTotalSales = customer.totalSales + invoice.grandTotal;
+        const newPending = customer.pending + invoice.grandTotal;
+        return {
+          ...customer,
+          totalSales: newTotalSales,
+          pending: newPending
+        };
+      }
+      return customer;
+    }));
+
+    // Update selected customer
+    if (selectedCustomer) {
+      const updatedCustomer = {
+        ...selectedCustomer,
+        totalSales: selectedCustomer.totalSales + invoice.grandTotal,
+        pending: selectedCustomer.pending + invoice.grandTotal
+      };
+      setSelectedCustomer(updatedCustomer);
+    }
+  };
+
+  const handlePaymentAdded = (payment: any) => {
+    setPayments(prev => [...prev, payment]);
+    
+    // Update customer totals
+    setCustomers(prev => prev.map(customer => {
+      if (customer.id === selectedCustomer.id) {
+        const newTotalPaid = customer.totalPaid + payment.amount;
+        const newPending = Math.max(0, customer.pending - payment.amount);
+        return {
+          ...customer,
+          totalPaid: newTotalPaid,
+          pending: newPending
+        };
+      }
+      return customer;
+    }));
+
+    // Update selected customer
+    if (selectedCustomer) {
+      const updatedCustomer = {
+        ...selectedCustomer,
+        totalPaid: selectedCustomer.totalPaid + payment.amount,
+        pending: Math.max(0, selectedCustomer.pending - payment.amount)
+      };
+      setSelectedCustomer(updatedCustomer);
+    }
   };
 
   return (
@@ -69,6 +155,7 @@ const SalesManagement: React.FC = () => {
             onClick={handleCreateSale}
             size="sm"
             className="bg-primary hover:bg-primary/90"
+            disabled={!selectedCustomer}
           >
             <Plus className="w-4 h-4 mr-2" />
             New Sale
@@ -84,101 +171,26 @@ const SalesManagement: React.FC = () => {
           onCustomerSelect={handleCustomerSelect}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onCustomerCreated={handleCustomerCreated}
         />
 
         {selectedCustomer ? (
           <div className="space-y-6">
-            {/* Customer Dashboard */}
-            <Card className="glass-card">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{selectedCustomer.name}</CardTitle>
-                  <Button variant="ghost" size="sm">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Customer Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Mail className="w-4 h-4" />
-                      <span>{selectedCustomer.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="w-4 h-4" />
-                      <span>{selectedCustomer.phone}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="w-4 h-4" />
-                      <span className="text-xs">{selectedCustomer.address}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      GSTIN: {selectedCustomer.gstin}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Summary Cards */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-card/40 rounded-lg p-3 text-center">
-                    <div className="flex items-center justify-center mb-1">
-                      <DollarSign className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="text-lg font-bold text-foreground">
-                      ₹{selectedCustomer.totalSales.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Total Sales</div>
-                  </div>
-                  <div className="bg-card/40 rounded-lg p-3 text-center">
-                    <div className="flex items-center justify-center mb-1">
-                      <CreditCard className="w-4 h-4 text-green-400" />
-                    </div>
-                    <div className="text-lg font-bold text-foreground">
-                      ₹{selectedCustomer.totalPaid.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Paid</div>
-                  </div>
-                  <div className="bg-card/40 rounded-lg p-3 text-center">
-                    <div className="flex items-center justify-center mb-1">
-                      <Receipt className="w-4 h-4 text-yellow-400" />
-                    </div>
-                    <div className="text-lg font-bold text-foreground">
-                      ₹{selectedCustomer.pending.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Pending</div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={handleCreateSale}
-                    className="flex-1 bg-primary hover:bg-primary/90"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Sale
-                  </Button>
-                  <Button 
-                    onClick={handleAddPayment}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Add Payment
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Customer Info Panel */}
+            <CustomerInfoPanel
+              customer={selectedCustomer}
+              onAddPayment={handleAddPayment}
+              onCreateSale={handleCreateSale}
+            />
 
             {/* Analytics */}
             <CustomerAnalytics customer={selectedCustomer} />
 
             {/* Sales Invoice List */}
-            <SalesInvoiceList customerId={selectedCustomer.id} />
+            <SalesInvoiceList 
+              customerId={selectedCustomer.id}
+              invoices={invoices.filter(inv => inv.customerId === selectedCustomer.id)}
+            />
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -189,7 +201,7 @@ const SalesManagement: React.FC = () => {
             <p className="text-muted-foreground text-sm mb-4">
               Choose a customer to view their sales history and create new invoices
             </p>
-            <Button onClick={handleCreateSale} variant="outline">
+            <Button onClick={handleCreateSale} variant="outline" disabled>
               <Plus className="w-4 h-4 mr-2" />
               Create First Sale
             </Button>
@@ -197,14 +209,16 @@ const SalesManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Floating Action Button */}
+      {/* Floating Action Buttons */}
       <div className="fixed bottom-24 right-4 z-50">
         <div className="flex flex-col gap-2 items-end">
           <Button
             onClick={handleCreateSale}
             size="sm"
             variant="outline"
-            className="rounded-full"
+            className="rounded-full shadow-lg"
+            disabled={!selectedCustomer}
+            title="Create New Sale"
           >
             <Plus className="w-4 h-4 mr-2" />
             Sale
@@ -212,8 +226,10 @@ const SalesManagement: React.FC = () => {
           <Button
             onClick={handleAddPayment}
             size="sm"
-            variant="outline"
-            className="rounded-full"
+            variant="outline" 
+            className="rounded-full shadow-lg"
+            disabled={!selectedCustomer}
+            title="Add Payment"
           >
             <CreditCard className="w-4 h-4 mr-2" />
             Payment
@@ -226,12 +242,14 @@ const SalesManagement: React.FC = () => {
         isOpen={showCreateSale}
         onClose={() => setShowCreateSale(false)}
         customer={selectedCustomer}
+        onInvoiceCreated={handleInvoiceCreated}
       />
       
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
         customer={selectedCustomer}
+        onPaymentAdded={handlePaymentAdded}
       />
     </div>
   );

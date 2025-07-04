@@ -18,42 +18,48 @@ import { Button } from '@/components/ui/button';
 interface Invoice {
   id: string;
   date: string;
-  amount: number;
+  grandTotal: number;
   status: 'paid' | 'unpaid' | 'partial';
-  items: string;
+  items: any[];
   paidAmount?: number;
 }
 
 interface SalesInvoiceListProps {
   customerId: number;
+  invoices?: Invoice[];
 }
 
-const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({ customerId }) => {
+const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({ 
+  customerId, 
+  invoices = [] 
+}) => {
   // Mock invoice data - in real app this would come from database
-  const invoices: Invoice[] = [
+  const defaultInvoices: Invoice[] = [
     {
       id: 'INV-001',
       date: '2024-01-15',
-      amount: 25000,
+      grandTotal: 25000,
       status: 'paid',
-      items: 'Steel Rods, Cement'
+      items: [{ name: 'Steel Rods' }, { name: 'Cement' }]
     },
     {
       id: 'INV-002',
       date: '2024-01-20',
-      amount: 18000,
+      grandTotal: 18000,
       status: 'partial',
-      items: 'Iron Sheets',
+      items: [{ name: 'Iron Sheets' }],
       paidAmount: 10000
     },
     {
       id: 'INV-003',
       date: '2024-01-25',
-      amount: 32000,
+      grandTotal: 32000,
       status: 'unpaid',
-      items: 'Construction Materials'
+      items: [{ name: 'Construction Materials' }]
     }
   ];
+
+  const allInvoices = [...defaultInvoices, ...invoices];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -89,20 +95,26 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({ customerId }) => {
     });
   };
 
-  const hasInvoices = invoices.length > 0;
+  const getItemsSummary = (items: any[]) => {
+    if (!items || items.length === 0) return 'No items';
+    if (items.length === 1) return items[0].name;
+    return `${items[0].name} +${items.length - 1} more`;
+  };
+
+  const hasInvoices = allInvoices.length > 0;
 
   return (
     <Card className="glass-card">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Receipt className="w-5 h-5" />
-          Sales Invoices
+          Sales Invoices ({allInvoices.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
         {hasInvoices ? (
           <div className="space-y-3">
-            {invoices.map((invoice) => (
+            {allInvoices.map((invoice) => (
               <div
                 key={invoice.id}
                 className="activity-item"
@@ -115,7 +127,7 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({ customerId }) => {
                     <div>
                       <div className="font-medium text-foreground">{invoice.id}</div>
                       <div className="text-sm text-muted-foreground">
-                        {formatDate(invoice.date)} • {invoice.items}
+                        {formatDate(invoice.date)} • {getItemsSummary(invoice.items)}
                       </div>
                     </div>
                   </div>
@@ -123,7 +135,7 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({ customerId }) => {
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <div className="font-semibold text-foreground">
-                        ₹{invoice.amount.toLocaleString()}
+                        ₹{invoice.grandTotal.toLocaleString()}
                       </div>
                       {invoice.status === 'partial' && invoice.paidAmount && (
                         <div className="text-xs text-muted-foreground">

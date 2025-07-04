@@ -10,18 +10,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   customer: any;
+  onPaymentAdded?: (payment: any) => void;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
   isOpen,
   onClose,
-  customer
+  customer,
+  onPaymentAdded
 }) => {
+  const { toast } = useToast();
   const [amount, setAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('cash');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -36,14 +40,43 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   ];
 
   const handleSubmit = () => {
-    // Handle payment submission
-    console.log('Adding payment:', {
-      customer,
+    if (!amount || Number(amount) <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid payment amount",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const payment = {
+      id: Date.now(),
+      customerId: customer.id,
+      customerName: customer.name,
       amount: Number(amount),
       paymentMode,
       date,
-      notes
+      notes,
+      createdAt: new Date().toISOString()
+    };
+
+    console.log('Adding payment:', payment);
+    
+    if (onPaymentAdded) {
+      onPaymentAdded(payment);
+    }
+
+    toast({
+      title: "Success",
+      description: `Payment of ₹${Number(amount).toLocaleString()} added successfully!`
     });
+
+    // Reset form
+    setAmount('');
+    setPaymentMode('cash');
+    setDate(new Date().toISOString().split('T')[0]);
+    setNotes('');
+
     onClose();
   };
 
@@ -65,18 +98,23 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               <div className="text-sm text-muted-foreground">
                 Pending: ₹{customer.pending.toLocaleString()}
               </div>
+              <div className="text-xs text-muted-foreground">
+                Last Payment: Recently
+              </div>
             </div>
           )}
 
           {/* Amount */}
           <div>
-            <Label className="text-sm">Amount</Label>
+            <Label className="text-sm">Amount *</Label>
             <Input
               type="number"
               placeholder="Enter amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="text-lg"
+              className="text-lg mt-1"
+              min="0"
+              step="0.01"
             />
           </div>
 
@@ -98,11 +136,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Date */}
           <div>
-            <Label className="text-sm">Date</Label>
+            <Label className="text-sm">Payment Date</Label>
             <Input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              className="mt-1"
             />
           </div>
 
@@ -117,8 +156,33 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             />
           </div>
 
+          {/* Quick Amount Buttons */}
+          {customer && customer.pending > 0 && (
+            <div className="space-y-2">
+              <Label className="text-sm">Quick Amount</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAmount((customer.pending / 2).toString())}
+                >
+                  Half (₹{(customer.pending / 2).toLocaleString()})
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAmount(customer.pending.toString())}
+                >
+                  Full (₹{customer.pending.toLocaleString()})
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-2">
             <Button
               variant="outline"
               onClick={onClose}
@@ -129,7 +193,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <Button
               onClick={handleSubmit}
               className="flex-1 bg-primary hover:bg-primary/90"
-              disabled={!amount}
+              disabled={!amount || Number(amount) <= 0}
             >
               <Banknote className="w-4 h-4 mr-2" />
               Add Payment
