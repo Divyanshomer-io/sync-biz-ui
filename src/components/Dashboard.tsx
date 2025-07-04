@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
@@ -40,7 +39,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       title: 'Sales This Month',
       value: '₹2,45,000',
       change: '+12.5%',
-      trend: 'up',
+      trend: 'up' as const,
       icon: TrendingUp,
       color: 'text-green-400'
     },
@@ -48,7 +47,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       title: 'Purchases This Month', 
       value: '₹1,85,000',
       change: '+8.2%',
-      trend: 'up',
+      trend: 'up' as const,
       icon: Package,
       color: 'text-blue-400'
     },
@@ -56,7 +55,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       title: 'Payments Received',
       value: '₹1,98,000',
       change: '+15.3%',
-      trend: 'up',
+      trend: 'up' as const,
       icon: DollarSign,
       color: 'text-green-400'
     },
@@ -64,7 +63,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       title: 'Outstanding Dues',
       value: '₹47,000',
       change: '-5.8%',
-      trend: 'down',
+      trend: 'down' as const,
       icon: TrendingDown,
       color: 'text-red-400'
     },
@@ -72,7 +71,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       title: 'Total Customers',
       value: '148',
       change: '+3',
-      trend: 'up',
+      trend: 'up' as const,
       icon: Users,
       color: 'text-primary'
     },
@@ -80,7 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       title: 'GST Payable',
       value: '₹18,500',
       change: 'Due in 5 days',
-      trend: 'neutral',
+      trend: 'neutral' as const,
       icon: AlertCircle,
       color: 'text-yellow-400'
     }
