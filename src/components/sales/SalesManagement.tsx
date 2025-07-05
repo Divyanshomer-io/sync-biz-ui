@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Plus, 
@@ -43,7 +42,7 @@ const SalesManagement: React.FC = () => {
     gstin?: string;
     unitPreference?: string;
     notes?: string;
-  }) => {
+  }): Promise<Customer> => {
     try {
       const newCustomer = await createCustomer({
         name: newCustomerData.name,

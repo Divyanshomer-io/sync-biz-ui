@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { User, Phone, MapPin, FileText, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,15 @@ import { Customer } from '@/hooks/useCustomers';
 interface CreateCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCustomerCreated: (customer: Customer) => Promise<Customer>;
+  onCustomerCreated: (customer: {
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    gstin?: string;
+    unitPreference?: string;
+    notes?: string;
+  }) => Promise<Customer>;
 }
 
 const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
@@ -50,7 +57,7 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onCustomerCreated(formData as Customer);
+      await onCustomerCreated(formData);
       
       // Reset form
       setFormData({

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, User, Plus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,15 @@ interface CustomerValidationModalProps {
   onClose: () => void;
   customers: Customer[];
   onCustomerValidated: (customer: Customer) => void;
-  onCustomerCreated: (customer: Customer) => Promise<Customer>;
+  onCustomerCreated: (customer: {
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    gstin?: string;
+    unitPreference?: string;
+    notes?: string;
+  }) => Promise<Customer>;
   action: 'sale' | 'payment';
 }
 
@@ -58,8 +65,16 @@ const CustomerValidationModal: React.FC<CustomerValidationModalProps> = ({
     setShowCreateModal(true);
   };
 
-  const handleCustomerCreated = async (newCustomer: Customer) => {
-    const createdCustomer = await onCustomerCreated(newCustomer);
+  const handleCustomerCreated = async (newCustomerData: {
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    gstin?: string;
+    unitPreference?: string;
+    notes?: string;
+  }) => {
+    const createdCustomer = await onCustomerCreated(newCustomerData);
     onCustomerValidated(createdCustomer);
     setShowCreateModal(false);
     handleClose();
