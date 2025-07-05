@@ -15,19 +15,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-interface Customer {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  gstin: string;
-  totalSales: number;
-  totalPaid: number;
-  pending: number;
-  unitPreference: string;
-}
+import { Customer } from '@/hooks/useCustomers';
 
 interface CustomerInfoPanelProps {
   customer: Customer;
@@ -116,7 +104,7 @@ const CustomerInfoPanel: React.FC<CustomerInfoPanelProps> = ({
                 <DollarSign className="w-4 h-4 text-primary" />
               </div>
               <div className="text-lg font-bold text-foreground">
-                ₹{customer.totalSales.toLocaleString()}
+                ₹{customer.totalSales?.toLocaleString() || 0}
               </div>
               <div className="text-xs text-muted-foreground">Total Sales</div>
             </div>
@@ -125,26 +113,26 @@ const CustomerInfoPanel: React.FC<CustomerInfoPanelProps> = ({
                 <CreditCard className="w-4 h-4 text-green-400" />
               </div>
               <div className="text-lg font-bold text-foreground">
-                ₹{customer.totalPaid.toLocaleString()}
+                ₹{customer.totalPaid?.toLocaleString() || 0}
               </div>
               <div className="text-xs text-muted-foreground">Paid</div>
             </div>
             <div className="bg-card/40 rounded-lg p-3 text-center">
               <div className="flex items-center justify-center mb-2">
-                <Receipt className={`w-4 h-4 ${getStatusColor(customer.pending)}`} />
+                <Receipt className={`w-4 h-4 ${getStatusColor(customer.pending || 0)}`} />
               </div>
-              <div className={`text-lg font-bold ${getStatusColor(customer.pending)}`}>
-                ₹{customer.pending.toLocaleString()}
+              <div className={`text-lg font-bold ${getStatusColor(customer.pending || 0)}`}>
+                ₹{customer.pending?.toLocaleString() || 0}
               </div>
               <div className="text-xs text-muted-foreground">Pending</div>
             </div>
           </div>
 
           {/* Payment Status Badge */}
-          {customer.pending > 0 && (
+          {(customer.pending || 0) > 0 && (
             <div className="flex justify-center">
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(customer.pending)}`}>
-                {customer.pending > 50000 ? 'High Pending Amount' : 'Payment Due'}
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(customer.pending || 0)}`}>
+                {(customer.pending || 0) > 50000 ? 'High Pending Amount' : 'Payment Due'}
               </span>
             </div>
           )}
