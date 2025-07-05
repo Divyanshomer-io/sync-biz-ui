@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import CreateCustomerModal from './CreateCustomerModal';
+import CustomerAnalytics from './CustomerAnalytics';
 import { Customer } from '@/hooks/useCustomers';
 
 interface CustomerSelectorProps {
@@ -33,7 +34,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
   onCustomerCreated
 }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set());
+  const [expandedCustomerId, setExpandedCustomerId] = useState<string | null>(null);
 
   const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -58,14 +59,11 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
   };
 
   const toggleCustomerExpansion = (customerId: string) => {
-    const newExpanded = new Set(expandedCustomers);
-    if (newExpanded.has(customerId)) {
-      newExpanded.delete(customerId);
+    if (expandedCustomerId === customerId) {
+      setExpandedCustomerId(null);
     } else {
-      newExpanded.add(customerId);
+      setExpandedCustomerId(customerId);
     }
-    setExpandedCustomers(newExpanded);
-    onCustomerSelect(customers.find(c => c.id === customerId) || null);
   };
 
   return (
@@ -87,41 +85,45 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
           <div className="space-y-2 max-h-none overflow-visible">
             {filteredCustomers.length > 0 ? (
               filteredCustomers.map((customer) => (
-                <Card
-                  key={customer.id}
-                  className="glass-card border-border/50"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-foreground">{customer.name}</div>
-                          <div className="text-sm text-muted-foreground">{customer.phone}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <div className="text-sm font-medium text-foreground">
-                            ₹{customer.totalSales?.toLocaleString() || 0}
+                <div key={customer.id} className="space-y-2">
+                  <Card className="glass-card border-border/50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-muted-foreground" />
                           </div>
-                          <div className="text-xs text-muted-foreground">Total Sales</div>
+                          <div>
+                            <div className="font-medium text-foreground">{customer.name}</div>
+                            <div className="text-sm text-muted-foreground">{customer.phone}</div>
+                          </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleCustomerExpansion(customer.id)}
-                        >
-                          <ChevronDown className={`w-4 h-4 transform transition-transform ${
-                            expandedCustomers.has(customer.id) ? 'rotate-180' : ''
-                          }`} />
-                        </Button>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <div className="text-sm font-medium text-foreground">
+                              ₹{customer.totalSales?.toLocaleString() || 0}
+                            </div>
+                            <div className="text-xs text-muted-foreground">Total Sales</div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleCustomerExpansion(customer.id)}
+                          >
+                            <ChevronDown className={`w-4 h-4 transform transition-transform ${
+                              expandedCustomerId === customer.id ? 'rotate-180' : ''
+                            }`} />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Analytics Panel - Shows only for expanded customer */}
+                  {expandedCustomerId === customer.id && (
+                    <CustomerAnalytics customer={customer} />
+                  )}
+                </div>
               ))
             ) : (
               <div className="text-center py-8 text-muted-foreground">

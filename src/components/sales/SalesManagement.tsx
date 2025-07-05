@@ -150,7 +150,7 @@ const SalesManagement: React.FC = () => {
         ...sale,
         date: sale.invoice_date,
         grandTotal: sale.total_amount,
-        status: 'completed' as const,
+        status: 'paid' as const,
         items: [{
           name: sale.item_name,
           quantity: sale.quantity,
@@ -167,7 +167,7 @@ const SalesManagement: React.FC = () => {
       ...sale,
       date: sale.invoice_date,
       grandTotal: sale.total_amount,
-      status: 'completed' as const,
+      status: 'paid' as const,
       items: [{
         name: sale.item_name,
         quantity: sale.quantity,
