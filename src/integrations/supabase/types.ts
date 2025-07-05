@@ -9,7 +9,148 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          address: string | null
+          contact: string | null
+          created_at: string
+          email: string | null
+          gst_number: string | null
+          id: string
+          name: string
+          notes: string | null
+          preferred_unit: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact?: string | null
+          created_at?: string
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          preferred_unit?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact?: string | null
+          created_at?: string
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          preferred_unit?: string | null
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          customer_id: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_mode: string | null
+        }
+        Insert: {
+          amount_paid: number
+          created_at?: string
+          customer_id: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          customer_id?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          created_at: string
+          customer_id: string
+          delivery_notes: string | null
+          driver_contact: string | null
+          gst_amount: number
+          gst_percentage: number | null
+          id: string
+          invoice_date: string
+          item_name: string
+          quantity: number
+          rate_per_unit: number
+          subtotal: number
+          total_amount: number
+          transport_charges: number | null
+          transport_company: string | null
+          truck_number: string | null
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          delivery_notes?: string | null
+          driver_contact?: string | null
+          gst_amount: number
+          gst_percentage?: number | null
+          id?: string
+          invoice_date?: string
+          item_name: string
+          quantity: number
+          rate_per_unit: number
+          subtotal: number
+          total_amount: number
+          transport_charges?: number | null
+          transport_company?: string | null
+          truck_number?: string | null
+          unit: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          delivery_notes?: string | null
+          driver_contact?: string | null
+          gst_amount?: number
+          gst_percentage?: number | null
+          id?: string
+          invoice_date?: string
+          item_name?: string
+          quantity?: number
+          rate_per_unit?: number
+          subtotal?: number
+          total_amount?: number
+          transport_charges?: number | null
+          transport_company?: string | null
+          truck_number?: string | null
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

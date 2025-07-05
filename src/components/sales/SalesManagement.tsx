@@ -2,14 +2,10 @@
 import React, { useState } from 'react';
 import { 
   Plus, 
-  Search, 
   User, 
   CreditCard,
-  TrendingUp,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import CustomerSelector from './CustomerSelector';
 import CustomerInfoPanel from './CustomerInfoPanel';
 import SalesInvoiceList from './SalesInvoiceList';
@@ -17,32 +13,49 @@ import CreateSaleModal from './CreateSaleModal';
 import PaymentModal from './PaymentModal';
 import CustomerAnalytics from './CustomerAnalytics';
 import CustomerValidationModal from './CustomerValidationModal';
+import { useCustomers } from '@/hooks/useCustomers';
+import { useSales } from '@/hooks/useSales';
+import { usePayments } from '@/hooks/usePayments';
 import { useToast } from '@/hooks/use-toast';
 
 const SalesManagement: React.FC = () => {
   const { toast } = useToast();
+  const { customers, createCustomer, refetch: refetchCustomers } = useCustomers();
+  const { createSale, getSalesByCustomer } = useSales();
+  const { createPayment } = usePayments();
+  
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [showCreateSale, setShowCreateSale] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCustomerValidation, setShowCustomerValidation] = useState(false);
   const [validationAction, setValidationAction] = useState<'sale' | 'payment'>('sale');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Start with empty customers array - no default data
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
 
   const handleCustomerSelect = (customer: any) => {
     setSelectedCustomer(customer);
   };
 
-  const handleCustomerCreated = (newCustomer: any) => {
-    setCustomers(prev => [...prev, newCustomer]);
-    toast({
-      title: "Success",
-      description: "Customer created successfully!"
-    });
+  const handleCustomerCreated = async (newCustomerData: any) => {
+    try {
+      const newCustomer = await createCustomer({
+        name: newCustomerData.name,
+        email: newCustomerData.email,
+        contact: newCustomerData.phone,
+        address: newCustomerData.address,
+        gst_number: newCustomerData.gstin,
+        unitPreference: newCustomerData.unitPreference,
+        notes: newCustomerData.notes
+      });
+      
+      toast({
+        title: "Success",
+        description: "Customer created successfully!"
+      });
+      
+      return newCustomer;
+    } catch (error) {
+      console.error('Error creating customer:', error);
+    }
   };
 
   const handleCreateSale = () => {
@@ -66,70 +79,49 @@ const SalesManagement: React.FC = () => {
     }
   };
 
-  const handleInvoiceCreated = (invoice: any) => {
-    setInvoices(prev => [...prev, invoice]);
-    
-    // Update customer totals
-    setCustomers(prev => prev.map(customer => {
-      if (customer.id === selectedCustomer.id) {
-        const newTotalSales = customer.totalSales + invoice.grandTotal;
-        const newPending = customer.pending + invoice.grandTotal;
-        return {
-          ...customer,
-          totalSales: newTotalSales,
-          pending: newPending
-        };
-      }
-      return customer;
-    }));
+  const handleInvoiceCreated = async (invoiceData: any) => {
+    try {
+      await createSale({
+        customerId: selectedCustomer.id,
+        items: invoiceData.items,
+        gstRate: invoiceData.gstRate,
+        transportCharges: invoiceData.transportCharges,
+        transportDetails: invoiceData.transportDetails,
+        notes: invoiceData.notes
+      });
 
-    // Update selected customer
-    if (selectedCustomer) {
-      const updatedCustomer = {
-        ...selectedCustomer,
-        totalSales: selectedCustomer.totalSales + invoice.grandTotal,
-        pending: selectedCustomer.pending + invoice.grandTotal
-      };
-      setSelectedCustomer(updatedCustomer);
+      // Refresh customer data to update totals
+      refetchCustomers();
+
+      toast({
+        title: "Success",
+        description: `Sale created successfully!`
+      });
+    } catch (error) {
+      console.error('Error creating sale:', error);
     }
-
-    toast({
-      title: "Success",
-      description: `Invoice ${invoice.id} created successfully!`
-    });
   };
 
-  const handlePaymentAdded = (payment: any) => {
-    setPayments(prev => [...prev, payment]);
-    
-    // Update customer totals
-    setCustomers(prev => prev.map(customer => {
-      if (customer.id === selectedCustomer.id) {
-        const newTotalPaid = customer.totalPaid + payment.amount;
-        const newPending = Math.max(0, customer.pending - payment.amount);
-        return {
-          ...customer,
-          totalPaid: newTotalPaid,
-          pending: newPending
-        };
-      }
-      return customer;
-    }));
+  const handlePaymentAdded = async (paymentData: any) => {
+    try {
+      await createPayment({
+        customerId: selectedCustomer.id,
+        amount: paymentData.amount,
+        paymentMode: paymentData.paymentMode,
+        date: paymentData.date,
+        notes: paymentData.notes
+      });
 
-    // Update selected customer
-    if (selectedCustomer) {
-      const updatedCustomer = {
-        ...selectedCustomer,
-        totalPaid: selectedCustomer.totalPaid + payment.amount,
-        pending: Math.max(0, selectedCustomer.pending - payment.amount)
-      };
-      setSelectedCustomer(updatedCustomer);
+      // Refresh customer data to update totals
+      refetchCustomers();
+
+      toast({
+        title: "Success",
+        description: `Payment of ₹${paymentData.amount.toLocaleString()} added successfully!`
+      });
+    } catch (error) {
+      console.error('Error adding payment:', error);
     }
-
-    toast({
-      title: "Success",
-      description: `Payment of ₹${payment.amount.toLocaleString()} added successfully!`
-    });
   };
 
   return (
@@ -177,7 +169,7 @@ const SalesManagement: React.FC = () => {
             {/* Sales Invoice List */}
             <SalesInvoiceList 
               customerId={selectedCustomer.id}
-              invoices={invoices.filter(inv => inv.customerId === selectedCustomer.id)}
+              invoices={getSalesByCustomer(selectedCustomer.id)}
             />
           </div>
         ) : customers.length === 0 ? (
