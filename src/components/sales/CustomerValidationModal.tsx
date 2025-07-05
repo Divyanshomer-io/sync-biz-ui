@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, User, Plus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -73,11 +74,12 @@ const CustomerValidationModal: React.FC<CustomerValidationModalProps> = ({
     gstin?: string;
     unitPreference?: string;
     notes?: string;
-  }) => {
+  }): Promise<Customer> => {
     const createdCustomer = await onCustomerCreated(newCustomerData);
     onCustomerValidated(createdCustomer);
     setShowCreateModal(false);
     handleClose();
+    return createdCustomer;
   };
 
   const handleClose = () => {

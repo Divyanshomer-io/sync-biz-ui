@@ -50,10 +50,11 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
     gstin?: string;
     unitPreference?: string;
     notes?: string;
-  }) => {
+  }): Promise<Customer> => {
     const createdCustomer = await onCustomerCreated(newCustomerData);
     onCustomerSelect(createdCustomer);
     setIsExpanded(false);
+    return createdCustomer;
   };
 
   return (
