@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Search, ChevronDown, Plus, User } from 'lucide-react';
+import { Search, ChevronDown, User } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -59,19 +60,6 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
 
   return (
     <div className="space-y-3">
-      {/* Header with Create Button */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">Select Customer</h3>
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          size="sm"
-          className="bg-primary hover:bg-primary/90"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          New Customer
-        </Button>
-      </div>
-
       {/* Search Input */}
       <div className="relative">
         <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
@@ -165,13 +153,6 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
             <p className="text-muted-foreground text-sm mb-4">
               Start by adding your first customer to create sales
             </p>
-            <Button 
-              onClick={() => setShowCreateModal(true)}
-              className="bg-primary hover:bg-primary/90"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Customer
-            </Button>
           </CardContent>
         </Card>
       )}

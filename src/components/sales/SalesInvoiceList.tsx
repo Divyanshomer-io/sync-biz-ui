@@ -25,7 +25,7 @@ interface Invoice {
 }
 
 interface SalesInvoiceListProps {
-  customerId: number;
+  customerId: string;
   invoices?: Invoice[];
 }
 
@@ -33,34 +33,6 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   customerId, 
   invoices = [] 
 }) => {
-  // Mock invoice data - in real app this would come from database
-  const defaultInvoices: Invoice[] = [
-    {
-      id: 'INV-001',
-      date: '2024-01-15',
-      grandTotal: 25000,
-      status: 'paid',
-      items: [{ name: 'Steel Rods' }, { name: 'Cement' }]
-    },
-    {
-      id: 'INV-002',
-      date: '2024-01-20',
-      grandTotal: 18000,
-      status: 'partial',
-      items: [{ name: 'Iron Sheets' }],
-      paidAmount: 10000
-    },
-    {
-      id: 'INV-003',
-      date: '2024-01-25',
-      grandTotal: 32000,
-      status: 'unpaid',
-      items: [{ name: 'Construction Materials' }]
-    }
-  ];
-
-  const allInvoices = [...defaultInvoices, ...invoices];
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'paid':
@@ -101,20 +73,20 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
     return `${items[0].name} +${items.length - 1} more`;
   };
 
-  const hasInvoices = allInvoices.length > 0;
+  const hasInvoices = invoices.length > 0;
 
   return (
     <Card className="glass-card">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Receipt className="w-5 h-5" />
-          Sales Invoices ({allInvoices.length})
+          Sales Invoices ({invoices.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
         {hasInvoices ? (
           <div className="space-y-3">
-            {allInvoices.map((invoice) => (
+            {invoices.map((invoice) => (
               <div
                 key={invoice.id}
                 className="activity-item"

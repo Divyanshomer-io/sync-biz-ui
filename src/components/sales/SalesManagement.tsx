@@ -151,26 +151,16 @@ const SalesManagement: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-16 pb-20">
-      {/* Header */}
-      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-md border-b border-border/50 px-4 py-3">
+    <div className="min-h-screen bg-background">
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border/50 px-4 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-foreground">Sales Management</h1>
-          <div className="flex gap-2">
-            <Button
-              onClick={handleCreateSale}
-              size="sm"
-              className="bg-primary hover:bg-primary/90"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Sale
-            </Button>
-          </div>
         </div>
       </div>
 
-      <div className="px-4 space-y-6">
-        {/* Customer Selection */}
+      <div className="pt-16 pb-20 px-4 space-y-6">
+        {/* Customer Search */}
         <CustomerSelector
           customers={customers}
           selectedCustomer={selectedCustomer}
@@ -192,7 +182,7 @@ const SalesManagement: React.FC = () => {
             {/* Analytics */}
             <CustomerAnalytics customer={selectedCustomer} />
 
-            {/* Sales Invoice List */}
+            {/* Sales Invoice List - Only show user-created invoices */}
             <SalesInvoiceList 
               customerId={selectedCustomer.id}
               invoices={transformSalesToInvoices(getSalesByCustomer(selectedCustomer.id))}
@@ -221,15 +211,21 @@ const SalesManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Floating Action Buttons - positioned above + Sale button */}
+      {/* Fixed Action Buttons - positioned above bottom navigation */}
       <div className="fixed bottom-24 right-4 z-50">
         <div className="flex flex-col gap-2 items-end">
           <Button
+            onClick={() => setShowCustomerValidation(true)}
+            size="sm"
+            className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Customer
+          </Button>
+          <Button
             onClick={handleAddPayment}
             size="sm"
-            variant="outline" 
-            className="rounded-full shadow-lg bg-white hover:bg-gray-50"
-            title="Add Payment"
+            className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
           >
             <CreditCard className="w-4 h-4 mr-2" />
             Payment
@@ -238,7 +234,6 @@ const SalesManagement: React.FC = () => {
             onClick={handleCreateSale}
             size="sm"
             className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
-            title="Create New Sale"
           >
             <Plus className="w-4 h-4 mr-2" />
             Sale

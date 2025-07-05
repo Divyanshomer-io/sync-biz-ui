@@ -21,6 +21,9 @@ import ChartSection from './ChartSection';
 import ActivityFeed from './ActivityFeed';
 import QuickActions from './QuickActions';
 import AlertsPanel from './AlertsPanel';
+import { useCustomers } from '@/hooks/useCustomers';
+import { useSales } from '@/hooks/useSales';
+import { usePayments } from '@/hooks/usePayments';
 
 interface DashboardProps {
   activeSection: string;
@@ -30,60 +33,79 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange }) => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
-  const [hasData, setHasData] = useState(false);
+  
+  // Get real data from hooks
+  const { customers } = useCustomers();
+  const { sales } = useSales();
+  const { payments } = usePayments();
 
-  // Check if we have any real business data
-  useEffect(() => {
-    // In a real app, this would check actual data from backend
-    // For now, we'll assume no data since we removed the mock data
-    setHasData(false);
-  }, []);
+  // Calculate metrics from real data
+  const totalCustomers = customers.length;
+  const totalSales = customers.reduce((sum, customer) => sum + (customer.totalSales || 0), 0);
+  const totalPaid = customers.reduce((sum, customer) => sum + (customer.totalPaid || 0), 0);
+  const totalPending = customers.reduce((sum, customer) => sum + (customer.pending || 0), 0);
+  
+  // Calculate this month's sales
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const thisMonthSales = sales.filter(sale => {
+    const saleDate = new Date(sale.created_at);
+    return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
+  }).reduce((sum, sale) => sum + Number(sale.total_amount), 0);
 
-  const emptyMetrics = [
+  // Calculate this month's payments
+  const thisMonthPayments = payments.filter(payment => {
+    const paymentDate = new Date(payment.created_at);
+    return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+  }).reduce((sum, payment) => sum + Number(payment.amount_paid), 0);
+
+  const hasData = totalCustomers > 0 || sales.length > 0;
+
+  const metrics = [
     {
       title: 'Sales This Month',
-      value: '₹0',
-      change: 'Start selling',
-      trend: 'neutral' as const,
+      value: `₹${thisMonthSales.toLocaleString()}`,
+      change: hasData ? 'This month' : 'Start selling',
+      trend: hasData ? 'up' as const : 'neutral' as const,
       icon: TrendingUp,
-      color: 'text-muted-foreground',
-      isEmpty: true
+      color: hasData ? 'text-green-500' : 'text-muted-foreground',
+      isEmpty: !hasData
     },
     {
-      title: 'Purchases This Month', 
-      value: '₹0',
-      change: 'No purchases yet',
-      trend: 'neutral' as const,
-      icon: Package,
-      color: 'text-muted-foreground',
-      isEmpty: true
+      title: 'Total Sales', 
+      value: `₹${totalSales.toLocaleString()}`,
+      change: hasData ? 'All time' : 'No sales yet',
+      trend: hasData ? 'up' as const : 'neutral' as const,
+      icon: DollarSign,
+      color: hasData ? 'text-blue-500' : 'text-muted-foreground',
+      isEmpty: !hasData
     },
     {
       title: 'Payments Received',
-      value: '₹0',
-      change: 'No payments yet',
-      trend: 'neutral' as const,
+      value: `₹${totalPaid.toLocaleString()}`,
+      change: hasData ? `₹${thisMonthPayments.toLocaleString()} this month` : 'No payments yet',
+      trend: hasData ? 'up' as const : 'neutral' as const,
       icon: DollarSign,
-      color: 'text-muted-foreground',
-      isEmpty: true
+      color: hasData ? 'text-green-500' : 'text-muted-foreground',
+      isEmpty: !hasData
     },
     {
       title: 'Outstanding Dues',
-      value: '₹0',
-      change: 'No dues pending',
-      trend: 'neutral' as const,
+      value: `₹${totalPending.toLocaleString()}`,
+      change: totalPending > 0 ? 'Pending collection' : 'No dues pending',
+      trend: totalPending > 0 ? 'down' as const : 'neutral' as const,
       icon: TrendingDown,
-      color: 'text-muted-foreground',
-      isEmpty: true
+      color: totalPending > 0 ? 'text-red-400' : 'text-muted-foreground',
+      isEmpty: !hasData
     },
     {
       title: 'Total Customers',
-      value: '0',
-      change: 'Add customers',
-      trend: 'neutral' as const,
+      value: totalCustomers.toString(),
+      change: hasData ? 'Active customers' : 'Add customers',
+      trend: hasData ? 'up' as const : 'neutral' as const,
       icon: Users,
-      color: 'text-muted-foreground',
-      isEmpty: true
+      color: hasData ? 'text-primary' : 'text-muted-foreground',
+      isEmpty: !hasData
     },
     {
       title: 'GST Payable',
@@ -160,7 +182,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Business Overview</h2>
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-            {emptyMetrics.map((metric, index) => (
+            {metrics.map((metric, index) => (
               <MetricCard
                 key={index}
                 title={metric.title}
