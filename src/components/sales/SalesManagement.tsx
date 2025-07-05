@@ -11,7 +11,6 @@ import CustomerInfoPanel from './CustomerInfoPanel';
 import SalesInvoiceList from './SalesInvoiceList';
 import CreateSaleModal from './CreateSaleModal';
 import PaymentModal from './PaymentModal';
-import CustomerAnalytics from './CustomerAnalytics';
 import CustomerValidationModal from './CustomerValidationModal';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useSales } from '@/hooks/useSales';
@@ -21,13 +20,14 @@ import { useToast } from '@/hooks/use-toast';
 const SalesManagement: React.FC = () => {
   const { toast } = useToast();
   const { customers, createCustomer, refetch: refetchCustomers } = useCustomers();
-  const { createSale, getSalesByCustomer } = useSales();
+  const { createSale, getSalesByCustomer, sales } = useSales();
   const { createPayment } = usePayments();
   
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showCreateSale, setShowCreateSale] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCustomerValidation, setShowCustomerValidation] = useState(false);
+  const [showCreateCustomer, setShowCreateCustomer] = useState(false);
   const [validationAction, setValidationAction] = useState<'sale' | 'payment'>('sale');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -67,14 +67,24 @@ const SalesManagement: React.FC = () => {
     }
   };
 
-  const handleCreateSale = () => {
-    setValidationAction('sale');
-    setShowCustomerValidation(true);
+  const handleCreateSale = (customer?: Customer) => {
+    if (customer) {
+      setSelectedCustomer(customer);
+      setShowCreateSale(true);
+    } else {
+      setValidationAction('sale');
+      setShowCustomerValidation(true);
+    }
   };
 
-  const handleAddPayment = () => {
-    setValidationAction('payment');
-    setShowCustomerValidation(true);
+  const handleAddPayment = (customer?: Customer) => {
+    if (customer) {
+      setSelectedCustomer(customer);
+      setShowPaymentModal(true);
+    } else {
+      setValidationAction('payment');
+      setShowCustomerValidation(true);
+    }
   };
 
   const handleCustomerValidated = (customer: Customer) => {
@@ -99,7 +109,6 @@ const SalesManagement: React.FC = () => {
         notes: invoiceData.notes
       });
 
-      // Refresh customer data to update totals
       refetchCustomers();
 
       toast({
@@ -121,7 +130,6 @@ const SalesManagement: React.FC = () => {
         notes: paymentData.notes
       });
 
-      // Refresh customer data to update totals
       refetchCustomers();
 
       toast({
@@ -133,7 +141,27 @@ const SalesManagement: React.FC = () => {
     }
   };
 
-  // Transform sales data to match expected invoice format
+  // Get last 30 invoices across all customers
+  const getRecentInvoices = () => {
+    return sales
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 30)
+      .map(sale => ({
+        ...sale,
+        date: sale.invoice_date,
+        grandTotal: sale.total_amount,
+        status: 'completed' as const,
+        items: [{
+          name: sale.item_name,
+          quantity: sale.quantity,
+          unit: sale.unit,
+          rate: sale.rate_per_unit,
+          amount: sale.subtotal
+        }],
+        customerName: customers.find(c => c.id === sale.customer_id)?.name || 'Unknown'
+      }));
+  };
+
   const transformSalesToInvoices = (sales: any[]) => {
     return sales.map(sale => ({
       ...sale,
@@ -160,7 +188,7 @@ const SalesManagement: React.FC = () => {
       </div>
 
       <div className="pt-16 pb-20 px-4 space-y-6">
-        {/* Customer Search */}
+        {/* Customer Search and List */}
         <CustomerSelector
           customers={customers}
           selectedCustomer={selectedCustomer}
@@ -170,22 +198,35 @@ const SalesManagement: React.FC = () => {
           onCustomerCreated={handleCustomerCreated}
         />
 
-        {selectedCustomer ? (
+        {/* Show Customer Info Panel only for selected customer */}
+        {selectedCustomer && (
           <div className="space-y-6">
-            {/* Single Customer Info Panel with integrated Analytics */}
             <CustomerInfoPanel
               customer={selectedCustomer}
-              onAddPayment={handleAddPayment}
-              onCreateSale={handleCreateSale}
+              onAddPayment={() => handleAddPayment(selectedCustomer)}
+              onCreateSale={() => handleCreateSale(selectedCustomer)}
             />
 
-            {/* Sales Invoice List */}
             <SalesInvoiceList 
               customerId={selectedCustomer.id}
               invoices={transformSalesToInvoices(getSalesByCustomer(selectedCustomer.id))}
             />
           </div>
-        ) : customers.length === 0 ? (
+        )}
+
+        {/* Recent Invoices Section - Show last 30 invoices */}
+        {sales.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Recent Invoices</h2>
+            <SalesInvoiceList 
+              customerId="all"
+              invoices={getRecentInvoices()}
+            />
+          </div>
+        )}
+
+        {/* Empty State */}
+        {customers.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mb-4">
               <User className="w-8 h-8 text-muted-foreground" />
@@ -195,24 +236,14 @@ const SalesManagement: React.FC = () => {
               Start by creating your first customer to begin managing sales
             </p>
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mb-4">
-              <User className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Select a Customer</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Choose a customer to view their sales history and create new invoices
-            </p>
-          </div>
         )}
       </div>
 
-      {/* Fixed Action Buttons - positioned above bottom navigation */}
+      {/* Fixed Action Buttons */}
       <div className="fixed bottom-24 right-4 z-50">
         <div className="flex flex-col gap-2 items-end">
           <Button
-            onClick={() => setShowCustomerValidation(true)}
+            onClick={() => setShowCreateCustomer(true)}
             size="sm"
             className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
           >
@@ -220,7 +251,7 @@ const SalesManagement: React.FC = () => {
             New Customer
           </Button>
           <Button
-            onClick={handleAddPayment}
+            onClick={() => handleAddPayment()}
             size="sm"
             className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
           >
@@ -228,7 +259,7 @@ const SalesManagement: React.FC = () => {
             Payment
           </Button>
           <Button
-            onClick={handleCreateSale}
+            onClick={() => handleCreateSale()}
             size="sm"
             className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
           >
@@ -240,8 +271,11 @@ const SalesManagement: React.FC = () => {
 
       {/* Modals */}
       <CustomerValidationModal
-        isOpen={showCustomerValidation}
-        onClose={() => setShowCustomerValidation(false)}
+        isOpen={showCreateCustomer || showCustomerValidation}
+        onClose={() => {
+          setShowCreateCustomer(false);
+          setShowCustomerValidation(false);
+        }}
         customers={customers}
         onCustomerValidated={handleCustomerValidated}
         onCustomerCreated={handleCustomerCreated}

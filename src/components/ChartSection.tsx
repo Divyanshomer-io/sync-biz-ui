@@ -8,64 +8,100 @@ import { TrendingUp, Users, PieChart as PieChartIcon } from 'lucide-react';
 interface ChartSectionProps {
   isEmpty?: boolean;
   timeFilter?: string;
+  sales?: any[];
+  payments?: any[];
+  customers?: any[];
 }
 
-const ChartSection: React.FC<ChartSectionProps> = ({ isEmpty = false, timeFilter = '1month' }) => {
+const ChartSection: React.FC<ChartSectionProps> = ({ 
+  isEmpty = false, 
+  timeFilter = '1month',
+  sales = [],
+  payments = [],
+  customers = []
+}) => {
   const [activeChart, setActiveChart] = useState('sales');
 
-  // Generate sample data based on time filter
-  const generateSampleData = (filter: string) => {
+  // Generate real data based on actual sales and payments
+  const generateRealData = (filter: string) => {
+    const now = new Date();
+    let periods: string[] = [];
+    let startDate: Date;
+
     switch (filter) {
       case '1week':
-        return [
-          { period: 'Mon', sales: 15000, purchases: 8000 },
-          { period: 'Tue', sales: 12000, purchases: 6000 },
-          { period: 'Wed', sales: 18000, purchases: 10000 },
-          { period: 'Thu', sales: 22000, purchases: 12000 },
-          { period: 'Fri', sales: 25000, purchases: 15000 },
-          { period: 'Sat', sales: 20000, purchases: 11000 },
-          { period: 'Sun', sales: 16000, purchases: 9000 }
-        ];
+        periods = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
       case '1year':
-        return [
-          { period: 'Jan', sales: 185000, purchases: 120000 },
-          { period: 'Feb', sales: 195000, purchases: 135000 },
-          { period: 'Mar', sales: 220000, purchases: 155000 },
-          { period: 'Apr', sales: 245000, purchases: 185000 },
-          { period: 'May', sales: 265000, purchases: 195000 },
-          { period: 'Jun', sales: 285000, purchases: 205000 },
-          { period: 'Jul', sales: 295000, purchases: 215000 },
-          { period: 'Aug', sales: 310000, purchases: 225000 },
-          { period: 'Sep', sales: 320000, purchases: 235000 },
-          { period: 'Oct', sales: 335000, purchases: 245000 },
-          { period: 'Nov', sales: 350000, purchases: 255000 },
-          { period: 'Dec', sales: 365000, purchases: 265000 }
-        ];
+        periods = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
       default: // 1month
-        return [
-          { period: 'Week 1', sales: 65000, purchases: 45000 },
-          { period: 'Week 2', sales: 72000, purchases: 48000 },
-          { period: 'Week 3', sales: 68000, purchases: 52000 },
-          { period: 'Week 4', sales: 75000, purchases: 55000 }
-        ];
+        periods = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     }
+
+    return periods.map((period, index) => {
+      let periodStart: Date;
+      let periodEnd: Date;
+
+      if (filter === '1week') {
+        periodStart = new Date(startDate.getTime() + index * 24 * 60 * 60 * 1000);
+        periodEnd = new Date(periodStart.getTime() + 24 * 60 * 60 * 1000);
+      } else if (filter === '1year') {
+        periodStart = new Date(now.getFullYear(), index, 1);
+        periodEnd = new Date(now.getFullYear(), index + 1, 0);
+      } else {
+        periodStart = new Date(startDate.getTime() + index * 7 * 24 * 60 * 60 * 1000);
+        periodEnd = new Date(periodStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+      }
+
+      // Only include data up to current date
+      if (periodStart > now) {
+        return { period, sales: 0, purchases: 0 };
+      }
+
+      const periodSales = sales.filter(sale => {
+        const saleDate = new Date(sale.created_at);
+        return saleDate >= periodStart && saleDate < periodEnd;
+      }).reduce((sum, sale) => sum + Number(sale.total_amount), 0);
+
+      const periodPayments = payments.filter(payment => {
+        const paymentDate = new Date(payment.created_at);
+        return paymentDate >= periodStart && paymentDate < periodEnd;
+      }).reduce((sum, payment) => sum + Number(payment.amount_paid), 0);
+
+      return {
+        period,
+        sales: periodSales,
+        purchases: periodPayments
+      };
+    });
   };
 
-  const salesData = generateSampleData(timeFilter);
+  const salesData = generateRealData(timeFilter);
 
-  const customerData = [
-    { name: 'ABC Industries', amount: 95000, transactions: 12 },
-    { name: 'XYZ Trading', amount: 78000, transactions: 8 },
-    { name: 'PQR Manufacturing', amount: 65000, transactions: 15 },
-    { name: 'LMN Enterprises', amount: 52000, transactions: 6 },
-    { name: 'RST Solutions', amount: 45000, transactions: 9 }
-  ];
+  // Real customer data - top 5 customers by sales
+  const topCustomers = customers
+    .filter(customer => (customer.totalSales || 0) > 0)
+    .sort((a, b) => (b.totalSales || 0) - (a.totalSales || 0))
+    .slice(0, 5)
+    .map(customer => ({
+      name: customer.name,
+      amount: customer.totalSales || 0,
+      transactions: sales.filter(sale => sale.customer_id === customer.id).length
+    }));
+
+  // Real payment status data
+  const totalSales = customers.reduce((sum, customer) => sum + (customer.totalSales || 0), 0);
+  const totalPaid = customers.reduce((sum, customer) => sum + (customer.totalPaid || 0), 0);
+  const totalPending = customers.reduce((sum, customer) => sum + (customer.pending || 0), 0);
 
   const paymentStatusData = [
-    { name: 'Paid', value: 198000, color: '#10B981' },
-    { name: 'Pending', value: 47000, color: '#F59E0B' },
-    { name: 'Overdue', value: 15000, color: '#EF4444' }
-  ];
+    { name: 'Paid', value: totalPaid, color: '#10B981' },
+    { name: 'Pending', value: totalPending, color: '#F59E0B' }
+  ].filter(item => item.value > 0);
 
   const chartTypes = [
     { id: 'sales', label: 'Sales Trend', icon: TrendingUp },
@@ -132,9 +168,19 @@ const ChartSection: React.FC<ChartSectionProps> = ({ isEmpty = false, timeFilter
         );
 
       case 'customers':
+        if (topCustomers.length === 0) {
+          return (
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              <div className="text-center space-y-2">
+                <div className="text-4xl opacity-50">👥</div>
+                <p>No customer data available</p>
+              </div>
+            </div>
+          );
+        }
         return (
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={customerData} layout="horizontal">
+            <BarChart data={topCustomers} layout="horizontal">
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis type="number" stroke="#9CA3AF" />
               <YAxis type="category" dataKey="name" stroke="#9CA3AF" width={120} />
@@ -152,6 +198,16 @@ const ChartSection: React.FC<ChartSectionProps> = ({ isEmpty = false, timeFilter
         );
 
       case 'payments':
+        if (paymentStatusData.length === 0) {
+          return (
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              <div className="text-center space-y-2">
+                <div className="text-4xl opacity-50">💳</div>
+                <p>No payment data available</p>
+              </div>
+            </div>
+          );
+        }
         return (
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
@@ -286,7 +285,13 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
               ))}
             </div>
           </div>
-          <ChartSection isEmpty={!hasData} timeFilter={timeFilter} />
+          <ChartSection 
+            isEmpty={!hasData} 
+            timeFilter={timeFilter}
+            sales={sales}
+            payments={payments}
+            customers={customers}
+          />
         </section>
 
         {/* Recent Activity */}
