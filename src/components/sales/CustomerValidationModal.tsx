@@ -12,26 +12,14 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import CreateCustomerModal from './CreateCustomerModal';
-
-interface Customer {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  gstin: string;
-  totalSales: number;
-  totalPaid: number;
-  pending: number;
-  unitPreference: string;
-}
+import { Customer } from '@/hooks/useCustomers';
 
 interface CustomerValidationModalProps {
   isOpen: boolean;
   onClose: () => void;
   customers: Customer[];
   onCustomerValidated: (customer: Customer) => void;
-  onCustomerCreated: (customer: Customer) => void;
+  onCustomerCreated: (customer: Customer) => Promise<Customer>;
   action: 'sale' | 'payment';
 }
 
@@ -70,9 +58,9 @@ const CustomerValidationModal: React.FC<CustomerValidationModalProps> = ({
     setShowCreateModal(true);
   };
 
-  const handleCustomerCreated = (newCustomer: Customer) => {
-    onCustomerCreated(newCustomer);
-    onCustomerValidated(newCustomer);
+  const handleCustomerCreated = async (newCustomer: Customer) => {
+    const createdCustomer = await onCustomerCreated(newCustomer);
+    onCustomerValidated(createdCustomer);
     setShowCreateModal(false);
     handleClose();
   };
@@ -145,7 +133,7 @@ const CustomerValidationModal: React.FC<CustomerValidationModalProps> = ({
                                 </div>
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                ₹{customer.totalSales.toLocaleString()}
+                                ₹{customer.totalSales?.toLocaleString() || 0}
                               </div>
                             </div>
                           </CardContent>

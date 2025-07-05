@@ -11,11 +11,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Customer } from '@/hooks/useCustomers';
 
 interface CreateCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCustomerCreated: (customer: any) => Promise<any>;
+  onCustomerCreated: (customer: Customer) => Promise<Customer>;
 }
 
 const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
@@ -49,7 +50,7 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onCustomerCreated(formData);
+      await onCustomerCreated(formData as Customer);
       
       // Reset form
       setFormData({

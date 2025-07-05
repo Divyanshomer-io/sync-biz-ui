@@ -13,7 +13,7 @@ import CreateSaleModal from './CreateSaleModal';
 import PaymentModal from './PaymentModal';
 import CustomerAnalytics from './CustomerAnalytics';
 import CustomerValidationModal from './CustomerValidationModal';
-import { useCustomers } from '@/hooks/useCustomers';
+import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useSales } from '@/hooks/useSales';
 import { usePayments } from '@/hooks/usePayments';
 import { useToast } from '@/hooks/use-toast';
@@ -24,25 +24,33 @@ const SalesManagement: React.FC = () => {
   const { createSale, getSalesByCustomer } = useSales();
   const { createPayment } = usePayments();
   
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showCreateSale, setShowCreateSale] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCustomerValidation, setShowCustomerValidation] = useState(false);
   const [validationAction, setValidationAction] = useState<'sale' | 'payment'>('sale');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleCustomerSelect = (customer: any) => {
+  const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomer(customer);
   };
 
-  const handleCustomerCreated = async (newCustomerData: any) => {
+  const handleCustomerCreated = async (newCustomerData: {
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    gstin?: string;
+    unitPreference?: string;
+    notes?: string;
+  }) => {
     try {
       const newCustomer = await createCustomer({
         name: newCustomerData.name,
         email: newCustomerData.email,
-        contact: newCustomerData.phone,
+        phone: newCustomerData.phone,
         address: newCustomerData.address,
-        gst_number: newCustomerData.gstin,
+        gstin: newCustomerData.gstin,
         unitPreference: newCustomerData.unitPreference,
         notes: newCustomerData.notes
       });
@@ -55,6 +63,7 @@ const SalesManagement: React.FC = () => {
       return newCustomer;
     } catch (error) {
       console.error('Error creating customer:', error);
+      throw error;
     }
   };
 
@@ -68,7 +77,7 @@ const SalesManagement: React.FC = () => {
     setShowCustomerValidation(true);
   };
 
-  const handleCustomerValidated = (customer: any) => {
+  const handleCustomerValidated = (customer: Customer) => {
     setSelectedCustomer(customer);
     setShowCustomerValidation(false);
     
@@ -82,7 +91,7 @@ const SalesManagement: React.FC = () => {
   const handleInvoiceCreated = async (invoiceData: any) => {
     try {
       await createSale({
-        customerId: selectedCustomer.id,
+        customerId: selectedCustomer!.id,
         items: invoiceData.items,
         gstRate: invoiceData.gstRate,
         transportCharges: invoiceData.transportCharges,
@@ -105,7 +114,7 @@ const SalesManagement: React.FC = () => {
   const handlePaymentAdded = async (paymentData: any) => {
     try {
       await createPayment({
-        customerId: selectedCustomer.id,
+        customerId: selectedCustomer!.id,
         amount: paymentData.amount,
         paymentMode: paymentData.paymentMode,
         date: paymentData.date,
@@ -122,6 +131,23 @@ const SalesManagement: React.FC = () => {
     } catch (error) {
       console.error('Error adding payment:', error);
     }
+  };
+
+  // Transform sales data to match expected invoice format
+  const transformSalesToInvoices = (sales: any[]) => {
+    return sales.map(sale => ({
+      ...sale,
+      date: sale.invoice_date,
+      grandTotal: sale.total_amount,
+      status: 'completed' as const,
+      items: [{
+        name: sale.item_name,
+        quantity: sale.quantity,
+        unit: sale.unit,
+        rate: sale.rate_per_unit,
+        amount: sale.subtotal
+      }]
+    }));
   };
 
   return (
@@ -169,7 +195,7 @@ const SalesManagement: React.FC = () => {
             {/* Sales Invoice List */}
             <SalesInvoiceList 
               customerId={selectedCustomer.id}
-              invoices={getSalesByCustomer(selectedCustomer.id)}
+              invoices={transformSalesToInvoices(getSalesByCustomer(selectedCustomer.id))}
             />
           </div>
         ) : customers.length === 0 ? (

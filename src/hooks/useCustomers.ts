@@ -7,9 +7,9 @@ export interface Customer {
   id: string;
   name: string;
   email: string;
-  contact: string;
+  phone: string;
   address: string;
-  gst_number: string;
+  gstin: string;
   preferred_unit: string;
   notes?: string;
   created_at: string;
@@ -17,6 +17,7 @@ export interface Customer {
   totalSales?: number;
   totalPaid?: number;
   pending?: number;
+  unitPreference?: string; // Add this for backward compatibility
 }
 
 export const useCustomers = () => {
@@ -56,9 +57,9 @@ export const useCustomers = () => {
           return {
             ...customer,
             email: customer.email || `${customer.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
-            contact: customer.contact || '+91 98765 43210',
+            phone: customer.contact || '+91 98765 43210',
             address: customer.address || 'Address not provided',
-            gst_number: customer.gst_number || 'GSTIN not provided',
+            gstin: customer.gst_number || 'GSTIN not provided',
             totalSales,
             totalPaid,
             pending: Math.max(0, totalSales - totalPaid),
@@ -80,16 +81,24 @@ export const useCustomers = () => {
     }
   };
 
-  const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at' | 'totalSales' | 'totalPaid' | 'pending'>) => {
+  const createCustomer = async (customerData: {
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    gstin?: string;
+    unitPreference?: string;
+    notes?: string;
+  }) => {
     try {
       const { data, error } = await supabase
         .from('customers')
         .insert([{
           name: customerData.name,
           email: customerData.email || null,
-          contact: customerData.contact || null,
+          contact: customerData.phone || null,
           address: customerData.address || null,
-          gst_number: customerData.gst_number || null,
+          gst_number: customerData.gstin || null,
           preferred_unit: customerData.unitPreference || 'kg',
           notes: customerData.notes || null
         }])
@@ -101,9 +110,9 @@ export const useCustomers = () => {
       const newCustomer = {
         ...data,
         email: data.email || `${data.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
-        contact: data.contact || '+91 98765 43210',
+        phone: data.contact || '+91 98765 43210',
         address: data.address || 'Address not provided',
-        gst_number: data.gst_number || 'GSTIN not provided',
+        gstin: data.gst_number || 'GSTIN not provided',
         totalSales: 0,
         totalPaid: 0,
         pending: 0,

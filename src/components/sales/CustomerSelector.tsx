@@ -1,24 +1,10 @@
-
 import React, { useState } from 'react';
 import { Search, ChevronDown, Plus, User } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import CreateCustomerModal from './CreateCustomerModal';
-
-interface Customer {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  gstin: string;
-  totalSales: number;
-  totalPaid: number;
-  pending: number;
-  unitPreference: string;
-  notes?: string;
-}
+import { Customer } from '@/hooks/useCustomers';
 
 interface CustomerSelectorProps {
   customers: Customer[];
@@ -26,7 +12,7 @@ interface CustomerSelectorProps {
   onCustomerSelect: (customer: Customer) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onCustomerCreated: (customer: Customer) => void;
+  onCustomerCreated: (customer: Customer) => Promise<Customer>;
 }
 
 const CustomerSelector: React.FC<CustomerSelectorProps> = ({
@@ -48,9 +34,9 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
 
   const hasCustomers = customers.length > 0;
 
-  const handleCustomerCreated = (newCustomer: Customer) => {
-    onCustomerCreated(newCustomer);
-    onCustomerSelect(newCustomer);
+  const handleCustomerCreated = async (newCustomer: Customer) => {
+    const createdCustomer = await onCustomerCreated(newCustomer);
+    onCustomerSelect(createdCustomer);
     setIsExpanded(false);
   };
 
@@ -136,7 +122,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-medium text-foreground">
-                            ₹{customer.totalSales.toLocaleString()}
+                            ₹{customer.totalSales?.toLocaleString() || 0}
                           </div>
                           <div className="text-xs text-muted-foreground">Total Sales</div>
                         </div>
