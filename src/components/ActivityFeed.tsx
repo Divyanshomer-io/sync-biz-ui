@@ -1,63 +1,46 @@
 
 import React from 'react';
-import { Receipt, CreditCard, Package, Users, Clock } from 'lucide-react';
+import { Receipt, CreditCard, Users, Clock } from 'lucide-react';
 
 interface ActivityFeedProps {
   isEmpty?: boolean;
+  timeFilter?: string;
+  sales?: any[];
+  payments?: any[];
 }
 
-const ActivityFeed: React.FC<ActivityFeedProps> = ({ isEmpty = false }) => {
+const ActivityFeed: React.FC<ActivityFeedProps> = ({ 
+  isEmpty = false, 
+  timeFilter = '1month',
+  sales = [],
+  payments = []
+}) => {
+  // Combine and sort sales and payments by date
   const activities = [
-    {
-      id: 1,
+    ...sales.map(sale => ({
+      id: sale.id,
       type: 'sale',
-      title: 'Invoice #INV-001234',
-      description: 'ABC Industries - ₹45,000',
-      time: '2 hours ago',
-      status: 'paid',
-      icon: Receipt
-    },
-    {
-      id: 2,
+      title: `Sale - ${sale.item_name}`,
+      description: `${sale.quantity} ${sale.unit} @ ₹${sale.rate_per_unit} - ₹${Number(sale.total_amount).toLocaleString()}`,
+      time: new Date(sale.created_at).toLocaleDateString('en-IN'),
+      status: 'completed',
+      icon: Receipt,
+      amount: Number(sale.total_amount)
+    })),
+    ...payments.map(payment => ({
+      id: payment.id,
       type: 'payment',
       title: 'Payment Received',
-      description: 'XYZ Trading - ₹32,000',
-      time: '4 hours ago',
+      description: `₹${Number(payment.amount_paid).toLocaleString()} via ${payment.payment_mode || 'cash'}`,
+      time: new Date(payment.created_at).toLocaleDateString('en-IN'),
       status: 'completed',
-      icon: CreditCard
-    },
-    {
-      id: 3,
-      type: 'purchase',
-      title: 'Purchase Order #PO-567',
-      description: 'Raw Materials - ₹18,500',
-      time: '6 hours ago',
-      status: 'pending',
-      icon: Package
-    },
-    {
-      id: 4,
-      type: 'customer',
-      title: 'New Customer Added',
-      description: 'PQR Manufacturing',
-      time: '1 day ago',
-      status: 'completed',
-      icon: Users
-    },
-    {
-      id: 5,
-      type: 'sale',
-      title: 'Invoice #INV-001235',
-      description: 'LMN Enterprises - ₹67,500',
-      time: '1 day ago',
-      status: 'overdue',
-      icon: Receipt
-    }
-  ];
+      icon: CreditCard,
+      amount: Number(payment.amount_paid)
+    }))
+  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 10);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'paid':
       case 'completed':
         return 'status-paid';
       case 'pending':
@@ -71,8 +54,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ isEmpty = false }) => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'paid':
-        return 'Paid';
       case 'completed':
         return 'Done';
       case 'pending':
@@ -84,65 +65,54 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ isEmpty = false }) => {
     }
   };
 
-  if (isEmpty) {
+  if (isEmpty || activities.length === 0) {
     return (
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
+      <div className="text-center py-12 text-muted-foreground">
+        <div className="space-y-3">
+          <div className="text-4xl opacity-50">📋</div>
+          <p className="text-lg font-medium">No activity yet</p>
+          <p className="text-sm">Your recent transactions will appear here</p>
         </div>
-        <div className="text-center py-12 text-muted-foreground">
-          <div className="space-y-3">
-            <div className="text-4xl opacity-50">📋</div>
-            <p className="text-lg font-medium">No activity yet</p>
-            <p className="text-sm">Your recent transactions will appear here</p>
-          </div>
-        </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
-        <button className="text-sm text-primary hover:text-primary/80 transition-colors">
-          View All
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {activities.map((activity) => (
-          <div key={activity.id} className="activity-item">
-            <div className="flex items-center gap-3 flex-1">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <activity.icon className="w-5 h-5 text-primary" />
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground truncate">
-                  {activity.title}
-                </p>
-                <p className="text-sm text-muted-foreground truncate">
-                  {activity.description}
-                </p>
-                <div className="flex items-center gap-1 mt-1">
-                  <Clock className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    {activity.time}
-                  </span>
-                </div>
-              </div>
+    <div className="space-y-3">
+      {activities.map((activity) => (
+        <div key={`${activity.type}-${activity.id}`} className="activity-item">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <activity.icon className="w-5 h-5 text-primary" />
             </div>
-
-            <div className="flex flex-col items-end gap-2">
-              <span className={`${getStatusColor(activity.status)}`}>
-                {getStatusText(activity.status)}
-              </span>
+            
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-foreground truncate">
+                {activity.title}
+              </p>
+              <p className="text-sm text-muted-foreground truncate">
+                {activity.description}
+              </p>
+              <div className="flex items-center gap-1 mt-1">
+                <Clock className="w-3 h-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {activity.time}
+                </span>
+              </div>
             </div>
           </div>
-        ))}
-      </div>
-    </section>
+
+          <div className="flex flex-col items-end gap-2">
+            <div className="text-sm font-medium text-foreground">
+              ₹{activity.amount.toLocaleString()}
+            </div>
+            <span className={`${getStatusColor(activity.status)}`}>
+              {getStatusText(activity.status)}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 };
 

@@ -7,20 +7,51 @@ import { TrendingUp, Users, PieChart as PieChartIcon } from 'lucide-react';
 
 interface ChartSectionProps {
   isEmpty?: boolean;
+  timeFilter?: string;
 }
 
-const ChartSection: React.FC<ChartSectionProps> = ({ isEmpty = false }) => {
+const ChartSection: React.FC<ChartSectionProps> = ({ isEmpty = false, timeFilter = '1month' }) => {
   const [activeChart, setActiveChart] = useState('sales');
 
-  // Sample business data
-  const salesData = [
-    { month: 'Jan', sales: 185000, purchases: 120000 },
-    { month: 'Feb', sales: 195000, purchases: 135000 },
-    { month: 'Mar', sales: 220000, purchases: 155000 },
-    { month: 'Apr', sales: 245000, purchases: 185000 },
-    { month: 'May', sales: 265000, purchases: 195000 },
-    { month: 'Jun', sales: 285000, purchases: 205000 }
-  ];
+  // Generate sample data based on time filter
+  const generateSampleData = (filter: string) => {
+    switch (filter) {
+      case '1week':
+        return [
+          { period: 'Mon', sales: 15000, purchases: 8000 },
+          { period: 'Tue', sales: 12000, purchases: 6000 },
+          { period: 'Wed', sales: 18000, purchases: 10000 },
+          { period: 'Thu', sales: 22000, purchases: 12000 },
+          { period: 'Fri', sales: 25000, purchases: 15000 },
+          { period: 'Sat', sales: 20000, purchases: 11000 },
+          { period: 'Sun', sales: 16000, purchases: 9000 }
+        ];
+      case '1year':
+        return [
+          { period: 'Jan', sales: 185000, purchases: 120000 },
+          { period: 'Feb', sales: 195000, purchases: 135000 },
+          { period: 'Mar', sales: 220000, purchases: 155000 },
+          { period: 'Apr', sales: 245000, purchases: 185000 },
+          { period: 'May', sales: 265000, purchases: 195000 },
+          { period: 'Jun', sales: 285000, purchases: 205000 },
+          { period: 'Jul', sales: 295000, purchases: 215000 },
+          { period: 'Aug', sales: 310000, purchases: 225000 },
+          { period: 'Sep', sales: 320000, purchases: 235000 },
+          { period: 'Oct', sales: 335000, purchases: 245000 },
+          { period: 'Nov', sales: 350000, purchases: 255000 },
+          { period: 'Dec', sales: 365000, purchases: 265000 }
+        ];
+      default: // 1month
+        return [
+          { period: 'Week 1', sales: 65000, purchases: 45000 },
+          { period: 'Week 2', sales: 72000, purchases: 48000 },
+          { period: 'Week 3', sales: 68000, purchases: 52000 },
+          { period: 'Week 4', sales: 75000, purchases: 55000 }
+        ];
+    }
+  };
+
+  const salesData = generateSampleData(timeFilter);
 
   const customerData = [
     { name: 'ABC Industries', amount: 95000, transactions: 12 },
@@ -70,7 +101,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({ isEmpty = false }) => {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="month" stroke="#9CA3AF" />
+              <XAxis dataKey="period" stroke="#9CA3AF" />
               <YAxis stroke="#9CA3AF" />
               <Tooltip 
                 contentStyle={{ 
@@ -154,29 +185,26 @@ const ChartSection: React.FC<ChartSectionProps> = ({ isEmpty = false }) => {
   };
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Analytics</h2>
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          {chartTypes.map((chart) => (
-            <Button
-              key={chart.id}
-              variant={activeChart === chart.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveChart(chart.id)}
-              className="flex items-center gap-2 whitespace-nowrap"
-            >
-              <chart.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{chart.label}</span>
-            </Button>
-          ))}
-        </div>
+    <div className="space-y-4">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+        {chartTypes.map((chart) => (
+          <Button
+            key={chart.id}
+            variant={activeChart === chart.id ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveChart(chart.id)}
+            className="flex items-center gap-2 whitespace-nowrap"
+          >
+            <chart.icon className="w-4 h-4" />
+            <span className="hidden sm:inline">{chart.label}</span>
+          </Button>
+        ))}
       </div>
 
       <Card className="chart-container">
         {renderChart()}
       </Card>
-    </section>
+    </div>
   );
 };
 

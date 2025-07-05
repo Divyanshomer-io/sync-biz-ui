@@ -12,7 +12,8 @@ import {
   DollarSign,
   Users,
   AlertCircle,
-  Plus
+  Plus,
+  Calendar
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,42 +31,88 @@ interface DashboardProps {
   onSectionChange: (section: string) => void;
 }
 
+type TimeFilter = '1week' | '1month' | '1year';
+
 const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange }) => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('1month');
   
-  // Get real data from hooks
-  const { customers } = useCustomers();
-  const { sales } = useSales();
-  const { payments } = usePayments();
+  // Get real data from hooks with real-time updates
+  const { customers, refetch: refetchCustomers } = useCustomers();
+  const { sales, refetch: refetchSales } = useSales();
+  const { payments, refetch: refetchPayments } = usePayments();
 
-  // Calculate metrics from real data
+  // Set up real-time data refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchCustomers();
+      refetchSales();
+      refetchPayments();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [refetchCustomers, refetchSales, refetchPayments]);
+
+  const getFilteredData = (timeFilter: TimeFilter) => {
+    const now = new Date();
+    let startDate: Date;
+
+    switch (timeFilter) {
+      case '1week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '1month':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '1year':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    const filteredSales = sales.filter(sale => {
+      const saleDate = new Date(sale.created_at);
+      return saleDate >= startDate;
+    });
+
+    const filteredPayments = payments.filter(payment => {
+      const paymentDate = new Date(payment.created_at);
+      return paymentDate >= startDate;
+    });
+
+    return { filteredSales, filteredPayments };
+  };
+
+  const { filteredSales, filteredPayments } = getFilteredData(timeFilter);
+
+  // Calculate metrics from filtered data
   const totalCustomers = customers.length;
   const totalSales = customers.reduce((sum, customer) => sum + (customer.totalSales || 0), 0);
   const totalPaid = customers.reduce((sum, customer) => sum + (customer.totalPaid || 0), 0);
   const totalPending = customers.reduce((sum, customer) => sum + (customer.pending || 0), 0);
   
-  // Calculate this month's sales
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  const thisMonthSales = sales.filter(sale => {
-    const saleDate = new Date(sale.created_at);
-    return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
-  }).reduce((sum, sale) => sum + Number(sale.total_amount), 0);
-
-  // Calculate this month's payments
-  const thisMonthPayments = payments.filter(payment => {
-    const paymentDate = new Date(payment.created_at);
-    return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
-  }).reduce((sum, payment) => sum + Number(payment.amount_paid), 0);
+  // Calculate filtered period sales and payments
+  const periodSales = filteredSales.reduce((sum, sale) => sum + Number(sale.total_amount), 0);
+  const periodPayments = filteredPayments.reduce((sum, payment) => sum + Number(payment.amount_paid), 0);
 
   const hasData = totalCustomers > 0 || sales.length > 0;
 
+  const getTimeFilterLabel = (filter: TimeFilter) => {
+    switch (filter) {
+      case '1week': return 'This Week';
+      case '1month': return 'This Month';
+      case '1year': return 'This Year';
+      default: return 'This Month';
+    }
+  };
+
   const metrics = [
     {
-      title: 'Sales This Month',
-      value: `₹${thisMonthSales.toLocaleString()}`,
-      change: hasData ? 'This month' : 'Start selling',
+      title: `Sales ${getTimeFilterLabel(timeFilter)}`,
+      value: `₹${periodSales.toLocaleString()}`,
+      change: hasData ? getTimeFilterLabel(timeFilter) : 'Start selling',
       trend: hasData ? 'up' as const : 'neutral' as const,
       icon: TrendingUp,
       color: hasData ? 'text-green-500' : 'text-muted-foreground',
@@ -83,7 +130,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
     {
       title: 'Payments Received',
       value: `₹${totalPaid.toLocaleString()}`,
-      change: hasData ? `₹${thisMonthPayments.toLocaleString()} this month` : 'No payments yet',
+      change: hasData ? `₹${periodPayments.toLocaleString()} ${getTimeFilterLabel(timeFilter).toLowerCase()}` : 'No payments yet',
       trend: hasData ? 'up' as const : 'neutral' as const,
       icon: DollarSign,
       color: hasData ? 'text-green-500' : 'text-muted-foreground',
@@ -124,6 +171,12 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
     { id: 'purchases', label: 'Purchases', icon: Package },
     { id: 'reports', label: 'Reports', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings }
+  ];
+
+  const timeFilterOptions = [
+    { id: '1week' as TimeFilter, label: '1 Week' },
+    { id: '1month' as TimeFilter, label: '1 Month' },
+    { id: '1year' as TimeFilter, label: '1 Year' }
   ];
 
   return (
@@ -180,7 +233,25 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
 
         {/* KPI Metrics Cards */}
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Business Overview</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">Business Overview</h2>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <div className="flex bg-card/40 rounded-lg p-1">
+                {timeFilterOptions.map((option) => (
+                  <Button
+                    key={option.id}
+                    variant={timeFilter === option.id ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setTimeFilter(option.id)}
+                    className="text-xs"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
             {metrics.map((metric, index) => (
               <MetricCard
@@ -198,10 +269,46 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
         </section>
 
         {/* Charts Section */}
-        <ChartSection isEmpty={!hasData} />
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">Analytics</h2>
+            <div className="flex bg-card/40 rounded-lg p-1">
+              {timeFilterOptions.map((option) => (
+                <Button
+                  key={option.id}
+                  variant={timeFilter === option.id ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setTimeFilter(option.id)}
+                  className="text-xs"
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <ChartSection isEmpty={!hasData} timeFilter={timeFilter} />
+        </section>
 
         {/* Recent Activity */}
-        <ActivityFeed isEmpty={!hasData} />
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
+            <div className="flex bg-card/40 rounded-lg p-1">
+              {timeFilterOptions.map((option) => (
+                <Button
+                  key={option.id}
+                  variant={timeFilter === option.id ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setTimeFilter(option.id)}
+                  className="text-xs"
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <ActivityFeed isEmpty={!hasData} timeFilter={timeFilter} sales={filteredSales} payments={filteredPayments} />
+        </section>
       </main>
 
       {/* Fixed Bottom Navigation */}

@@ -172,17 +172,14 @@ const SalesManagement: React.FC = () => {
 
         {selectedCustomer ? (
           <div className="space-y-6">
-            {/* Customer Info Panel */}
+            {/* Single Customer Info Panel with integrated Analytics */}
             <CustomerInfoPanel
               customer={selectedCustomer}
               onAddPayment={handleAddPayment}
               onCreateSale={handleCreateSale}
             />
 
-            {/* Analytics */}
-            <CustomerAnalytics customer={selectedCustomer} />
-
-            {/* Sales Invoice List - Only show user-created invoices */}
+            {/* Sales Invoice List */}
             <SalesInvoiceList 
               customerId={selectedCustomer.id}
               invoices={transformSalesToInvoices(getSalesByCustomer(selectedCustomer.id))}
