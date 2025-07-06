@@ -1,17 +1,13 @@
 
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  User, 
-  CreditCard,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { User } from 'lucide-react';
 import CustomerSelector from './CustomerSelector';
 import CustomerInfoPanel from './CustomerInfoPanel';
 import SalesInvoiceList from './SalesInvoiceList';
 import CreateSaleModal from './CreateSaleModal';
 import PaymentModal from './PaymentModal';
 import CustomerValidationModal from './CustomerValidationModal';
+import FloatingActionButton from './FloatingActionButton';
 import { useCustomers, Customer } from '@/hooks/useCustomers';
 import { useSales } from '@/hooks/useSales';
 import { usePayments } from '@/hooks/usePayments';
@@ -67,24 +63,30 @@ const SalesManagement: React.FC = () => {
     }
   };
 
-  const handleCreateSale = (customer?: Customer) => {
-    if (customer) {
-      setSelectedCustomer(customer);
-      setShowCreateSale(true);
-    } else {
-      setValidationAction('sale');
-      setShowCustomerValidation(true);
-    }
+  // Handle direct customer actions from dropdown
+  const handleQuickPayment = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setShowPaymentModal(true);
   };
 
-  const handleAddPayment = (customer?: Customer) => {
-    if (customer) {
-      setSelectedCustomer(customer);
-      setShowPaymentModal(true);
-    } else {
-      setValidationAction('payment');
-      setShowCustomerValidation(true);
-    }
+  const handleNewSale = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setShowCreateSale(true);
+  };
+
+  // Handle FAB actions (these need customer validation)
+  const handleCreateSale = () => {
+    setValidationAction('sale');
+    setShowCustomerValidation(true);
+  };
+
+  const handleAddPayment = () => {
+    setValidationAction('payment');
+    setShowCustomerValidation(true);
+  };
+
+  const handleCreateCustomerFAB = () => {
+    setShowCreateCustomer(true);
   };
 
   const handleCustomerValidated = (customer: Customer) => {
@@ -196,6 +198,8 @@ const SalesManagement: React.FC = () => {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onCustomerCreated={handleCustomerCreated}
+          onQuickPayment={handleQuickPayment}
+          onNewSale={handleNewSale}
         />
 
         {/* Show Customer Info Panel only for selected customer */}
@@ -203,8 +207,8 @@ const SalesManagement: React.FC = () => {
           <div className="space-y-6">
             <CustomerInfoPanel
               customer={selectedCustomer}
-              onAddPayment={() => handleAddPayment(selectedCustomer)}
-              onCreateSale={() => handleCreateSale(selectedCustomer)}
+              onAddPayment={() => handleQuickPayment(selectedCustomer)}
+              onCreateSale={() => handleNewSale(selectedCustomer)}
             />
 
             <SalesInvoiceList 
@@ -239,35 +243,12 @@ const SalesManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Fixed Action Buttons */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <div className="flex flex-col gap-2 items-end">
-          <Button
-            onClick={() => setShowCreateCustomer(true)}
-            size="sm"
-            className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Customer
-          </Button>
-          <Button
-            onClick={() => handleAddPayment()}
-            size="sm"
-            className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
-          >
-            <CreditCard className="w-4 h-4 mr-2" />
-            Payment
-          </Button>
-          <Button
-            onClick={() => handleCreateSale()}
-            size="sm"
-            className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Sale
-          </Button>
-        </div>
-      </div>
+      {/* Floating Action Button */}
+      <FloatingActionButton
+        onCreateCustomer={handleCreateCustomerFAB}
+        onAddPayment={handleAddPayment}
+        onCreateSale={handleCreateSale}
+      />
 
       {/* Modals */}
       <CustomerValidationModal

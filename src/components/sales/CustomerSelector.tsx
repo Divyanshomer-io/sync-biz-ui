@@ -1,11 +1,10 @@
 
 import React, { useState } from 'react';
-import { Search, ChevronDown, User } from 'lucide-react';
+import { Search, ChevronDown, User, Plus, CreditCard } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import CreateCustomerModal from './CreateCustomerModal';
-import CustomerAnalytics from './CustomerAnalytics';
 import { Customer } from '@/hooks/useCustomers';
 
 interface CustomerSelectorProps {
@@ -23,6 +22,8 @@ interface CustomerSelectorProps {
     unitPreference?: string;
     notes?: string;
   }) => Promise<Customer>;
+  onQuickPayment: (customer: Customer) => void;
+  onNewSale: (customer: Customer) => void;
 }
 
 const CustomerSelector: React.FC<CustomerSelectorProps> = ({
@@ -31,7 +32,9 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
   onCustomerSelect,
   searchQuery,
   onSearchChange,
-  onCustomerCreated
+  onCustomerCreated,
+  onQuickPayment,
+  onNewSale
 }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [expandedCustomerId, setExpandedCustomerId] = useState<string | null>(null);
@@ -81,7 +84,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
 
       {hasCustomers ? (
         <div className="space-y-2">
-          {/* Customer List - Always show all customers in separate rows */}
+          {/* Customer List */}
           <div className="space-y-2 max-h-none overflow-visible">
             {filteredCustomers.length > 0 ? (
               filteredCustomers.map((customer) => (
@@ -119,9 +122,76 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
                     </CardContent>
                   </Card>
                   
-                  {/* Analytics Panel - Shows only for expanded customer */}
+                  {/* Expanded Customer Details */}
                   {expandedCustomerId === customer.id && (
-                    <CustomerAnalytics customer={customer} />
+                    <Card className="glass-card border-primary/20">
+                      <CardContent className="p-4">
+                        {/* Customer Contact Details */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                          <div className="space-y-2">
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Phone:</span>
+                              <span className="ml-2 text-foreground">{customer.phone}</span>
+                            </div>
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Email:</span>
+                              <span className="ml-2 text-foreground">{customer.email}</span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Address:</span>
+                              <span className="ml-2 text-foreground text-xs">{customer.address}</span>
+                            </div>
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">GSTIN:</span>
+                              <span className="ml-2 text-foreground text-xs">{customer.gstin}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Financial Summary */}
+                        <div className="grid grid-cols-3 gap-3 mb-4">
+                          <div className="bg-card/40 rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-foreground">
+                              ₹{customer.totalSales?.toLocaleString() || 0}
+                            </div>
+                            <div className="text-xs text-muted-foreground">Total Sales</div>
+                          </div>
+                          <div className="bg-card/40 rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-green-400">
+                              ₹{customer.totalPaid?.toLocaleString() || 0}
+                            </div>
+                            <div className="text-xs text-muted-foreground">Paid</div>
+                          </div>
+                          <div className="bg-card/40 rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-red-400">
+                              ₹{customer.pending?.toLocaleString() || 0}
+                            </div>
+                            <div className="text-xs text-muted-foreground">Pending</div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => onNewSale(customer)}
+                            className="flex-1 bg-primary hover:bg-primary/90"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            New Sale
+                          </Button>
+                          <Button 
+                            onClick={() => onQuickPayment(customer)}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Quick Payment
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
                 </div>
               ))

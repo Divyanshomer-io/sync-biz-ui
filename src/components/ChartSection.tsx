@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card } from '@/components/ui/card';
@@ -22,7 +21,6 @@ const ChartSection: React.FC<ChartSectionProps> = ({
 }) => {
   const [activeChart, setActiveChart] = useState('sales');
 
-  // Generate real data based on actual sales and payments
   const generateRealData = (filter: string) => {
     const now = new Date();
     let periods: string[] = [];
@@ -82,18 +80,19 @@ const ChartSection: React.FC<ChartSectionProps> = ({
 
   const salesData = generateRealData(timeFilter);
 
-  // Real customer data - top 5 customers by sales
+  // Improved top customers data with better visualization
   const topCustomers = customers
     .filter(customer => (customer.totalSales || 0) > 0)
     .sort((a, b) => (b.totalSales || 0) - (a.totalSales || 0))
-    .slice(0, 5)
-    .map(customer => ({
-      name: customer.name,
+    .slice(0, 6) // Show top 6 customers
+    .map((customer, index) => ({
+      name: customer.name.length > 10 ? customer.name.substring(0, 10) + '...' : customer.name,
+      fullName: customer.name,
       amount: customer.totalSales || 0,
-      transactions: sales.filter(sale => sale.customer_id === customer.id).length
+      transactions: sales.filter(sale => sale.customer_id === customer.id).length,
+      color: ['#0EA5E9', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6366F1'][index]
     }));
 
-  // Real payment status data
   const totalSales = customers.reduce((sum, customer) => sum + (customer.totalSales || 0), 0);
   const totalPaid = customers.reduce((sum, customer) => sum + (customer.totalPaid || 0), 0);
   const totalPending = customers.reduce((sum, customer) => sum + (customer.pending || 0), 0);
@@ -179,22 +178,58 @@ const ChartSection: React.FC<ChartSectionProps> = ({
           );
         }
         return (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={topCustomers} layout="horizontal">
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis type="number" stroke="#9CA3AF" />
-              <YAxis type="category" dataKey="name" stroke="#9CA3AF" width={120} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#1F2937', 
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#F9FAFB'
-                }} 
-              />
-              <Bar dataKey="amount" fill="#0EA5E9" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-80 flex flex-col">
+            {/* Pie Chart */}
+            <div className="flex-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={topCustomers}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey="amount"
+                  >
+                    {topCustomers.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#F9FAFB'
+                    }}
+                    formatter={(value: number, name: string, props: any) => [
+                      `₹${value.toLocaleString()}`,
+                      props.payload.fullName
+                    ]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            
+            {/* Legend */}
+            <div className="grid grid-cols-2 gap-2 mt-4 px-4">
+              {topCustomers.map((customer, index) => (
+                <div key={index} className="flex items-center gap-2 text-sm">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: customer.color }}
+                  />
+                  <span className="text-foreground font-medium truncate" title={customer.fullName}>
+                    {customer.name}
+                  </span>
+                  <span className="text-muted-foreground ml-auto">
+                    ₹{(customer.amount / 1000).toFixed(0)}K
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         );
 
       case 'payments':
