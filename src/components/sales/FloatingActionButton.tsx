@@ -58,16 +58,13 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 
       {/* Action Buttons */}
       {isOpen && (
-        <div className="fixed bottom-24 right-4 z-50 space-y-3">
+        <div className="fixed bottom-24 left-4 z-50 space-y-3">
           {actions.map((action, index) => (
             <div
               key={action.label}
               className="flex items-center gap-3 animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <span className="bg-card/90 backdrop-blur-sm text-foreground px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-border/50">
-                {action.label}
-              </span>
               <Button
                 size="lg"
                 className={`w-12 h-12 rounded-full shadow-lg ${action.color} transition-all duration-200 hover:scale-110`}
@@ -75,15 +72,18 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
               >
                 <action.icon className="w-5 h-5 text-white" />
               </Button>
+              <span className="bg-card/90 backdrop-blur-sm text-foreground px-3 py-2 rounded-lg text-sm font-medium shadow-lg border border-border/50">
+                {action.label}
+              </span>
             </div>
           ))}
         </div>
       )}
 
-      {/* Main FAB */}
+      {/* Main FAB - positioned above footer on bottom left */}
       <Button
         size="lg"
-        className={`fixed bottom-6 right-4 z-50 w-14 h-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
+        className={`fixed bottom-20 left-4 z-50 w-14 h-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
           isOpen 
             ? 'bg-red-500 hover:bg-red-600 rotate-45' 
             : 'bg-primary hover:bg-primary/90'

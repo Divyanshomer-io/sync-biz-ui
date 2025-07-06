@@ -69,6 +69,15 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
     }
   };
 
+  const handleQuickAction = (e: React.MouseEvent, customer: Customer, action: 'payment' | 'sale') => {
+    e.stopPropagation(); // Prevent triggering the expansion toggle
+    if (action === 'payment') {
+      onQuickPayment(customer);
+    } else {
+      onNewSale(customer);
+    }
+  };
+
   return (
     <div className="space-y-3">
       {/* Search Input */}
@@ -175,14 +184,14 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
                         {/* Action Buttons */}
                         <div className="flex gap-2">
                           <Button 
-                            onClick={() => onNewSale(customer)}
+                            onClick={(e) => handleQuickAction(e, customer, 'sale')}
                             className="flex-1 bg-primary hover:bg-primary/90"
                           >
                             <Plus className="w-4 h-4 mr-2" />
                             New Sale
                           </Button>
                           <Button 
-                            onClick={() => onQuickPayment(customer)}
+                            onClick={(e) => handleQuickAction(e, customer, 'payment')}
                             variant="outline"
                             className="flex-1"
                           >

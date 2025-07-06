@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { 
   Calendar, 
   Receipt, 
-  MoreVertical, 
+  MoreHorizontal, 
   Eye, 
   Trash2,
   CheckCircle,
@@ -114,9 +114,36 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
               {invoices.map((invoice) => (
                 <div
                   key={invoice.id}
-                  className="activity-item"
+                  className="activity-item relative"
                 >
-                  <div className="flex items-center justify-between w-full">
+                  {/* Three dots at top right */}
+                  <div className="absolute top-3 right-3 z-10">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted/20">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-card border-border shadow-lg z-50">
+                        <DropdownMenuItem 
+                          onClick={() => handlePreviewInvoice(invoice)}
+                          className="cursor-pointer hover:bg-muted/20"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Preview Invoice
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteInvoice(invoice.id)}
+                          className="cursor-pointer hover:bg-destructive/20 text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Invoice
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <div className="flex items-center justify-between w-full pr-12">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                         {getStatusIcon(invoice.status)}
@@ -149,30 +176,6 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
                         {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                       </span>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 bg-card border-border shadow-lg">
-                          <DropdownMenuItem 
-                            onClick={() => handlePreviewInvoice(invoice)}
-                            className="cursor-pointer hover:bg-muted/20"
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            Preview Invoice
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteInvoice(invoice.id)}
-                            className="cursor-pointer hover:bg-destructive/20 text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Invoice
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
                   </div>
                 </div>
