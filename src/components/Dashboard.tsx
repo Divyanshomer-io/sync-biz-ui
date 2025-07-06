@@ -24,6 +24,9 @@ import AlertsPanel from './AlertsPanel';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useSales } from '@/hooks/useSales';
 import { usePayments } from '@/hooks/usePayments';
+import { useVendors } from '@/hooks/useVendors';
+import { usePurchases } from '@/hooks/usePurchases';
+import { usePaymentsMade } from '@/hooks/usePaymentsMade';
 
 interface DashboardProps {
   activeSection: string;
@@ -41,6 +44,9 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
   const { customers, refetch: refetchCustomers } = useCustomers();
   const { sales, refetch: refetchSales } = useSales();
   const { payments, refetch: refetchPayments } = usePayments();
+  const { data: vendors = [], refetch: refetchVendors } = useVendors();
+  const { data: purchases = [], refetch: refetchPurchases } = usePurchases();
+  const { data: paymentsMade = [], refetch: refetchPaymentsMade } = usePaymentsMade();
 
   // Set up real-time data refresh
   useEffect(() => {
@@ -48,10 +54,13 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       refetchCustomers();
       refetchSales();
       refetchPayments();
+      refetchVendors();
+      refetchPurchases();
+      refetchPaymentsMade();
     }, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
-  }, [refetchCustomers, refetchSales, refetchPayments]);
+  }, [refetchCustomers, refetchSales, refetchPayments, refetchVendors, refetchPurchases, refetchPaymentsMade]);
 
   const getFilteredData = (timeFilter: TimeFilter) => {
     const now = new Date();
@@ -81,10 +90,20 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       return paymentDate >= startDate;
     });
 
-    return { filteredSales, filteredPayments };
+    const filteredPurchases = purchases.filter(purchase => {
+      const purchaseDate = new Date(purchase.created_at);
+      return purchaseDate >= startDate;
+    });
+
+    const filteredPaymentsMade = paymentsMade.filter(payment => {
+      const paymentDate = new Date(payment.created_at);
+      return paymentDate >= startDate;
+    });
+
+    return { filteredSales, filteredPayments, filteredPurchases, filteredPaymentsMade };
   };
 
-  const { filteredSales, filteredPayments } = getFilteredData(timeFilter);
+  const { filteredSales, filteredPayments, filteredPurchases, filteredPaymentsMade } = getFilteredData(timeFilter);
 
   // Calculate metrics from filtered data
   const totalCustomers = customers.length;
@@ -92,11 +111,22 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
   const totalPaid = customers.reduce((sum, customer) => sum + (customer.totalPaid || 0), 0);
   const totalPending = customers.reduce((sum, customer) => sum + (customer.pending || 0), 0);
   
+  // Calculate purchase metrics
+  const totalPurchases = vendors.reduce((sum, vendor) => sum + (vendor.totalPurchases || 0), 0);
+  const totalPurchasesPaid = vendors.reduce((sum, vendor) => sum + (vendor.totalPaid || 0), 0);
+  const totalPurchasesPending = vendors.reduce((sum, vendor) => sum + (vendor.pending || 0), 0);
+  
   // Calculate filtered period sales and payments
   const periodSales = filteredSales.reduce((sum, sale) => sum + Number(sale.total_amount), 0);
   const periodPayments = filteredPayments.reduce((sum, payment) => sum + Number(payment.amount_paid), 0);
+  const periodPurchases = filteredPurchases.reduce((sum, purchase) => sum + Number(purchase.total_amount), 0);
+  const periodPurchasePayments = filteredPaymentsMade.reduce((sum, payment) => sum + Number(payment.amount), 0);
 
-  const hasData = totalCustomers > 0 || sales.length > 0;
+  // Calculate net summary (Sales - Purchases)
+  const netRevenue = totalSales - totalPurchases;
+  const netCashFlow = totalPaid - totalPurchasesPaid;
+
+  const hasData = totalCustomers > 0 || sales.length > 0 || vendors.length > 0 || purchases.length > 0;
 
   const getTimeFilterLabel = (filter: TimeFilter) => {
     switch (filter) {
@@ -118,21 +148,21 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       isEmpty: !hasData
     },
     {
-      title: 'Total Sales', 
-      value: `₹${totalSales.toLocaleString()}`,
-      change: hasData ? 'All time' : 'No sales yet',
+      title: `Purchases ${getTimeFilterLabel(timeFilter)}`,
+      value: `₹${periodPurchases.toLocaleString()}`,
+      change: hasData ? getTimeFilterLabel(timeFilter) : 'Start purchasing',
       trend: hasData ? 'up' as const : 'neutral' as const,
-      icon: DollarSign,
+      icon: Package,
       color: hasData ? 'text-blue-500' : 'text-muted-foreground',
       isEmpty: !hasData
     },
     {
-      title: 'Payments Received',
-      value: `₹${totalPaid.toLocaleString()}`,
-      change: hasData ? `₹${periodPayments.toLocaleString()} ${getTimeFilterLabel(timeFilter).toLowerCase()}` : 'No payments yet',
-      trend: hasData ? 'up' as const : 'neutral' as const,
+      title: 'Net Revenue',
+      value: `₹${netRevenue.toLocaleString()}`,
+      change: netRevenue >= 0 ? 'Profit' : 'Loss',
+      trend: netRevenue >= 0 ? 'up' as const : 'down' as const,
       icon: DollarSign,
-      color: hasData ? 'text-green-500' : 'text-muted-foreground',
+      color: netRevenue >= 0 ? 'text-green-500' : 'text-red-400',
       isEmpty: !hasData
     },
     {
@@ -145,22 +175,22 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       isEmpty: !hasData
     },
     {
-      title: 'Total Customers',
-      value: totalCustomers.toString(),
-      change: hasData ? 'Active customers' : 'Add customers',
-      trend: hasData ? 'up' as const : 'neutral' as const,
-      icon: Users,
-      color: hasData ? 'text-primary' : 'text-muted-foreground',
+      title: 'Outstanding Payables',
+      value: `₹${totalPurchasesPending.toLocaleString()}`,
+      change: totalPurchasesPending > 0 ? 'Pending payment' : 'No payables pending',
+      trend: totalPurchasesPending > 0 ? 'down' as const : 'neutral' as const,
+      icon: AlertCircle,
+      color: totalPurchasesPending > 0 ? 'text-orange-400' : 'text-muted-foreground',
       isEmpty: !hasData
     },
     {
-      title: 'GST Payable',
-      value: '₹0',
-      change: 'No GST due',
-      trend: 'neutral' as const,
-      icon: AlertCircle,
-      color: 'text-muted-foreground',
-      isEmpty: true
+      title: 'Net Cash Flow',
+      value: `₹${netCashFlow.toLocaleString()}`,
+      change: netCashFlow >= 0 ? 'Positive flow' : 'Negative flow',
+      trend: netCashFlow >= 0 ? 'up' as const : 'down' as const,
+      icon: DollarSign,
+      color: netCashFlow >= 0 ? 'text-green-500' : 'text-red-400',
+      isEmpty: !hasData
     }
   ];
 
@@ -217,16 +247,26 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
           <div className="bg-card/40 border border-border/50 rounded-xl p-4 mb-6">
             <h3 className="text-lg font-semibold text-foreground mb-2">Welcome to BizTrack!</h3>
             <p className="text-muted-foreground text-sm mb-3">
-              Start by going to Sales section to create your first customer and sale.
+              Start by going to Sales or Purchases section to create your first records.
             </p>
-            <Button 
-              size="sm" 
-              onClick={() => onSectionChange('sales')}
-              className="bg-primary hover:bg-primary/90"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Go to Sales
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                onClick={() => onSectionChange('sales')}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Go to Sales
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => onSectionChange('purchases')}
+              >
+                <Package className="w-4 h-4 mr-2" />
+                Go to Purchases
+              </Button>
+            </div>
           </div>
         )}
 

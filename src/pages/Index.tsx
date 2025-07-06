@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Dashboard from '@/components/Dashboard';
 import SalesManagement from '@/components/sales/SalesManagement';
+import PurchasesManagement from '@/components/purchases/PurchasesManagement';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -35,14 +36,7 @@ const Index = () => {
       case 'sales':
         return <SalesManagement />;
       case 'purchases':
-        return (
-          <div className="min-h-screen bg-background pt-16 pb-20 px-4 flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <h1 className="text-2xl font-bold text-foreground">Purchase Management</h1>
-              <p className="text-muted-foreground">Purchase features coming soon...</p>
-            </div>
-          </div>
-        );
+        return <PurchasesManagement />;
       case 'reports':
         return (
           <div className="min-h-screen bg-background pt-16 pb-20 px-4 flex items-center justify-center">
