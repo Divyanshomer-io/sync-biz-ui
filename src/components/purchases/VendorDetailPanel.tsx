@@ -3,16 +3,10 @@ import React, { useState } from 'react';
 import { 
   ArrowLeft,
   Building2,
-  Phone,
-  Mail,
-  MapPin,
-  FileText,
-  Plus,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
   Package,
-  Calendar
+  Calendar,
+  Plus,
+  CreditCard
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +18,8 @@ import { useVendorPayments } from '@/hooks/usePaymentsMade';
 import VendorInfoPanel from './VendorInfoPanel';
 import PurchasesList from './PurchasesList';
 import PaymentsMadeList from './PaymentsMadeList';
+import CreatePurchaseModal from './CreatePurchaseModal';
+import AddPaymentModal from './AddPaymentModal';
 
 interface VendorDetailPanelProps {
   vendor: Vendor;
@@ -32,6 +28,8 @@ interface VendorDetailPanelProps {
 
 const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showCreatePurchase, setShowCreatePurchase] = useState(false);
+  const [showAddPayment, setShowAddPayment] = useState(false);
   
   const { data: purchases = [] } = useVendorPurchases(vendor.id);
   const { data: payments = [] } = useVendorPayments(vendor.id);
@@ -50,9 +48,6 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
   const recentPurchaseAmount = recentPurchases.reduce((sum, purchase) => 
     sum + Number(purchase.total_amount), 0
   );
-  const recentPaymentAmount = recentPayments.reduce((sum, payment) => 
-    sum + Number(payment.amount), 0
-  );
 
   const metrics = [
     {
@@ -69,7 +64,7 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
       value: `₹${(vendor.totalPaid || 0).toLocaleString()}`,
       change: `${payments.length} payments`,
       trend: 'up' as const,
-      icon: DollarSign,
+      icon: CreditCard,
       color: 'text-green-500',
       isEmpty: false
     },
@@ -78,7 +73,7 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
       value: `₹${(vendor.pending || 0).toLocaleString()}`,
       change: (vendor.pending || 0) > 0 ? 'Due for payment' : 'All cleared',
       trend: (vendor.pending || 0) > 0 ? 'down' as const : 'neutral' as const,
-      icon: TrendingDown,
+      icon: CreditCard,
       color: (vendor.pending || 0) > 0 ? 'text-red-400' : 'text-muted-foreground',
       isEmpty: false
     },
@@ -122,13 +117,21 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowCreatePurchase(true)}
+            >
               <Plus className="w-4 h-4 mr-2" />
-              Add Purchase
+              New Purchase
             </Button>
-            <Button variant="outline" size="sm">
-              <DollarSign className="w-4 h-4 mr-2" />
-              Record Payment
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowAddPayment(true)}
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Add Payment
             </Button>
           </div>
         </div>
@@ -202,6 +205,19 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Modals */}
+      <CreatePurchaseModal
+        isOpen={showCreatePurchase}
+        onClose={() => setShowCreatePurchase(false)}
+        vendor={vendor}
+      />
+      
+      <AddPaymentModal
+        isOpen={showAddPayment}
+        onClose={() => setShowAddPayment(false)}
+        vendor={vendor}
+      />
     </div>
   );
 };

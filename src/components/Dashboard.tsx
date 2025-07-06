@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
@@ -105,13 +106,13 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
 
   const { filteredSales, filteredPayments, filteredPurchases, filteredPaymentsMade } = getFilteredData(timeFilter);
 
-  // Calculate metrics from filtered data
+  // Calculate metrics from actual data
   const totalCustomers = customers.length;
   const totalSales = customers.reduce((sum, customer) => sum + (customer.totalSales || 0), 0);
   const totalPaid = customers.reduce((sum, customer) => sum + (customer.totalPaid || 0), 0);
   const totalPending = customers.reduce((sum, customer) => sum + (customer.pending || 0), 0);
   
-  // Calculate purchase metrics
+  // Calculate purchase metrics from actual data
   const totalPurchases = vendors.reduce((sum, vendor) => sum + (vendor.totalPurchases || 0), 0);
   const totalPurchasesPaid = vendors.reduce((sum, vendor) => sum + (vendor.totalPaid || 0), 0);
   const totalPurchasesPending = vendors.reduce((sum, vendor) => sum + (vendor.pending || 0), 0);
@@ -137,7 +138,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
     }
   };
 
-  const metrics = [
+  const salesMetrics = [
     {
       title: `Sales ${getTimeFilterLabel(timeFilter)}`,
       value: `₹${periodSales.toLocaleString()}`,
@@ -145,15 +146,6 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       trend: hasData ? 'up' as const : 'neutral' as const,
       icon: TrendingUp,
       color: hasData ? 'text-green-500' : 'text-muted-foreground',
-      isEmpty: !hasData
-    },
-    {
-      title: `Purchases ${getTimeFilterLabel(timeFilter)}`,
-      value: `₹${periodPurchases.toLocaleString()}`,
-      change: hasData ? getTimeFilterLabel(timeFilter) : 'Start purchasing',
-      trend: hasData ? 'up' as const : 'neutral' as const,
-      icon: Package,
-      color: hasData ? 'text-blue-500' : 'text-muted-foreground',
       isEmpty: !hasData
     },
     {
@@ -175,6 +167,36 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       isEmpty: !hasData
     },
     {
+      title: 'Net Cash Flow',
+      value: `₹${netCashFlow.toLocaleString()}`,
+      change: netCashFlow >= 0 ? 'Positive flow' : 'Negative flow',
+      trend: netCashFlow >= 0 ? 'up' as const : 'down' as const,
+      icon: DollarSign,
+      color: netCashFlow >= 0 ? 'text-green-500' : 'text-red-400',
+      isEmpty: !hasData
+    }
+  ];
+
+  const purchaseMetrics = [
+    {
+      title: `Purchases ${getTimeFilterLabel(timeFilter)}`,
+      value: `₹${periodPurchases.toLocaleString()}`,
+      change: hasData ? getTimeFilterLabel(timeFilter) : 'Start purchasing',
+      trend: hasData ? 'up' as const : 'neutral' as const,
+      icon: Package,
+      color: hasData ? 'text-blue-500' : 'text-muted-foreground',
+      isEmpty: !hasData
+    },
+    {
+      title: 'Payments Made',
+      value: `₹${totalPurchasesPaid.toLocaleString()}`,
+      change: hasData ? 'Total paid' : 'No payments yet',
+      trend: hasData ? 'up' as const : 'neutral' as const,
+      icon: DollarSign,
+      color: hasData ? 'text-green-500' : 'text-muted-foreground',
+      isEmpty: !hasData
+    },
+    {
       title: 'Outstanding Payables',
       value: `₹${totalPurchasesPending.toLocaleString()}`,
       change: totalPurchasesPending > 0 ? 'Pending payment' : 'No payables pending',
@@ -184,12 +206,12 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       isEmpty: !hasData
     },
     {
-      title: 'Net Cash Flow',
-      value: `₹${netCashFlow.toLocaleString()}`,
-      change: netCashFlow >= 0 ? 'Positive flow' : 'Negative flow',
-      trend: netCashFlow >= 0 ? 'up' as const : 'down' as const,
-      icon: DollarSign,
-      color: netCashFlow >= 0 ? 'text-green-500' : 'text-red-400',
+      title: 'Total Vendors',
+      value: vendors.length.toString(),
+      change: hasData ? 'Active vendors' : 'Add vendors',
+      trend: hasData ? 'up' as const : 'neutral' as const,
+      icon: Users,
+      color: hasData ? 'text-primary' : 'text-muted-foreground',
       isEmpty: !hasData
     }
   ];
@@ -270,7 +292,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
           </div>
         )}
 
-        {/* KPI Metrics Cards */}
+        {/* Business Overview - Sales Metrics */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-foreground">Business Overview</h2>
@@ -292,7 +314,44 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
             </div>
           </div>
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-            {metrics.map((metric, index) => (
+            {salesMetrics.map((metric, index) => (
+              <MetricCard
+                key={index}
+                title={metric.title}
+                value={metric.value}
+                change={metric.change}
+                trend={metric.trend}
+                icon={metric.icon}
+                color={metric.color}
+                isEmpty={metric.isEmpty}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Purchase Overview - Now in Home Section */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">Purchase Overview</h2>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <div className="flex bg-card/40 rounded-lg p-1">
+                {timeFilterOptions.map((option) => (
+                  <Button
+                    key={option.id}
+                    variant={timeFilter === option.id ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setTimeFilter(option.id)}
+                    className="text-xs"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+            {purchaseMetrics.map((metric, index) => (
               <MetricCard
                 key={index}
                 title={metric.title}

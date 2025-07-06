@@ -5,16 +5,11 @@ import {
   Plus,
   Search,
   Package,
-  TrendingUp,
-  DollarSign,
-  AlertCircle,
   Users
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import MetricCard from '@/components/MetricCard';
-import FloatingActionButton from '@/components/sales/FloatingActionButton';
 import { useVendors } from '@/hooks/useVendors';
 import { usePurchases } from '@/hooks/usePurchases';
 import { usePaymentsMade } from '@/hooks/usePaymentsMade';
@@ -24,9 +19,6 @@ import VendorDetailPanel from './VendorDetailPanel';
 const PurchasesManagement: React.FC = () => {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showCreateVendor, setShowCreateVendor] = useState(false);
-  const [showCreatePurchase, setShowCreatePurchase] = useState(false);
-  const [showAddPayment, setShowAddPayment] = useState(false);
 
   const { data: vendors = [], refetch: refetchVendors } = useVendors();
   const { data: purchases = [], refetch: refetchPurchases } = usePurchases();
@@ -43,13 +35,7 @@ const PurchasesManagement: React.FC = () => {
     return () => clearInterval(interval);
   }, [refetchVendors, refetchPurchases, refetchPaymentsMade]);
 
-  // Calculate metrics
-  const totalVendors = vendors.length;
-  const totalPurchases = vendors.reduce((sum, vendor) => sum + (vendor.totalPurchases || 0), 0);
-  const totalPaid = vendors.reduce((sum, vendor) => sum + (vendor.totalPaid || 0), 0);
-  const totalPending = vendors.reduce((sum, vendor) => sum + (vendor.pending || 0), 0);
-
-  const hasData = totalVendors > 0;
+  const hasData = vendors.length > 0;
 
   const filteredVendors = vendors.filter(vendor =>
     vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -66,57 +52,6 @@ const PurchasesManagement: React.FC = () => {
   const handleVendorSelect = (vendorId: string) => {
     setSelectedVendorId(vendorId);
   };
-
-  const handleCreateVendor = () => {
-    setShowCreateVendor(true);
-  };
-
-  const handleCreatePurchase = () => {
-    setShowCreatePurchase(true);
-  };
-
-  const handleAddPayment = () => {
-    setShowAddPayment(true);
-  };
-
-  const metrics = [
-    {
-      title: 'Total Purchases',
-      value: `₹${totalPurchases.toLocaleString()}`,
-      change: hasData ? 'All time' : 'No purchases yet',
-      trend: hasData ? 'up' as const : 'neutral' as const,
-      icon: Package,
-      color: hasData ? 'text-blue-500' : 'text-muted-foreground',
-      isEmpty: !hasData
-    },
-    {
-      title: 'Payments Made',
-      value: `₹${totalPaid.toLocaleString()}`,
-      change: hasData ? 'Total paid' : 'No payments yet',
-      trend: hasData ? 'up' as const : 'neutral' as const,
-      icon: DollarSign,
-      color: hasData ? 'text-green-500' : 'text-muted-foreground',
-      isEmpty: !hasData
-    },
-    {
-      title: 'Outstanding Payables',
-      value: `₹${totalPending.toLocaleString()}`,
-      change: totalPending > 0 ? 'Pending payment' : 'No dues pending',
-      trend: totalPending > 0 ? 'down' as const : 'neutral' as const,
-      icon: AlertCircle,
-      color: totalPending > 0 ? 'text-red-400' : 'text-muted-foreground',
-      isEmpty: !hasData
-    },
-    {
-      title: 'Total Vendors',
-      value: totalVendors.toString(),
-      change: hasData ? 'Active vendors' : 'Add vendors',
-      trend: hasData ? 'up' as const : 'neutral' as const,
-      icon: Users,
-      color: hasData ? 'text-primary' : 'text-muted-foreground',
-      isEmpty: !hasData
-    }
-  ];
 
   if (selectedVendor) {
     return (
@@ -139,11 +74,7 @@ const PurchasesManagement: React.FC = () => {
             <h1 className="text-xl font-bold text-foreground">Purchases</h1>
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCreateVendor}
-          >
+          <Button variant="outline" size="sm">
             <Plus className="w-4 h-4 mr-2" />
             Add Vendor
           </Button>
@@ -159,35 +90,12 @@ const PurchasesManagement: React.FC = () => {
             <p className="text-muted-foreground text-sm mb-3">
               Add your first vendor and start tracking purchases and payments.
             </p>
-            <Button 
-              size="sm" 
-              onClick={handleCreateVendor}
-              className="bg-primary hover:bg-primary/90"
-            >
+            <Button size="sm" className="bg-primary hover:bg-primary/90">
               <Plus className="w-4 h-4 mr-2" />
               Add First Vendor
             </Button>
           </div>
         )}
-
-        {/* KPI Metrics Cards */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Purchase Overview</h2>
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-            {metrics.map((metric, index) => (
-              <MetricCard
-                key={index}
-                title={metric.title}
-                value={metric.value}
-                change={metric.change}
-                trend={metric.trend}
-                icon={metric.icon}
-                color={metric.color}
-                isEmpty={metric.isEmpty}
-              />
-            ))}
-          </div>
-        </section>
 
         {/* Search Bar */}
         {hasData && (
@@ -209,13 +117,6 @@ const PurchasesManagement: React.FC = () => {
           isEmpty={!hasData}
         />
       </main>
-
-      {/* Floating Action Button */}
-      <FloatingActionButton
-        onCreateCustomer={handleCreateVendor}
-        onAddPayment={handleAddPayment}
-        onCreateSale={handleCreatePurchase}
-      />
     </div>
   );
 };

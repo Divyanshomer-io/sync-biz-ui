@@ -21,7 +21,7 @@ export interface Purchase {
 export const usePurchases = () => {
   return useQuery({
     queryKey: ['purchases'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Purchase[]> => {
       console.log('Fetching purchases...');
       
       const { data, error } = await supabase
@@ -38,7 +38,11 @@ export const usePurchases = () => {
       }
 
       console.log('Purchases fetched:', data);
-      return data;
+      // Ensure status is properly typed
+      return data.map(purchase => ({
+        ...purchase,
+        status: purchase.status as 'Paid' | 'Unpaid'
+      }));
     },
   });
 };
@@ -46,7 +50,7 @@ export const usePurchases = () => {
 export const useVendorPurchases = (vendorId: string) => {
   return useQuery({
     queryKey: ['purchases', vendorId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Purchase[]> => {
       console.log('Fetching purchases for vendor:', vendorId);
       
       const { data, error } = await supabase
@@ -60,7 +64,11 @@ export const useVendorPurchases = (vendorId: string) => {
         throw error;
       }
 
-      return data;
+      // Ensure status is properly typed
+      return data.map(purchase => ({
+        ...purchase,
+        status: purchase.status as 'Paid' | 'Unpaid'
+      }));
     },
     enabled: !!vendorId,
   });
