@@ -163,17 +163,21 @@ const SalesManagement: React.FC = () => {
 
         {/* Recent Sales Invoices - Always show if there are sales */}
         {sales.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5" />
-              Recent Sales Invoices
-            </h2>
-            <SalesInvoiceList 
-              invoices={recentInvoices}
-              showHeader={false}
-              title="Recent Sales"
-            />
-          </div>
+          <div className="mt-8 px-4 sm:px-8">
+  <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+    <ShoppingCart className="w-5 h-5" />
+    Recent Sales Invoices
+  </h2>
+
+  <div className="overflow-x-auto">
+    <SalesInvoiceList 
+      invoices={recentInvoices}
+      showHeader={false}
+      title="Recent Sales"
+    />
+  </div>
+</div>
+
         )}
       </main>
 
