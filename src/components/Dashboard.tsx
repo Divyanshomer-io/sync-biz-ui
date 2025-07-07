@@ -174,6 +174,15 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       icon: DollarSign,
       color: netCashFlow >= 0 ? 'text-green-500' : 'text-red-400',
       isEmpty: !hasData
+    },
+    {
+      title: 'Total Customers',
+      value: customers.length.toString(),
+      change: hasData ? 'Active customers' : 'Add customers',
+      trend: hasData ? 'up' as const : 'neutral' as const,
+      icon: Users,
+      color: hasData ? 'text-primary' : 'text-muted-foreground',
+      isEmpty: !hasData
     }
   ];
 
