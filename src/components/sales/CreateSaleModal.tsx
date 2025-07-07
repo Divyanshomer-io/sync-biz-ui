@@ -120,44 +120,48 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
     return;
   }
 
-    const invoice = {
-      //id: generateInvoiceNumber(),
-      customerId: customer.id,
-      customerName: customer.name,
-      date: new Date().toISOString().split('T')[0],
-      items: items,
-      subtotal,
-      gstRate,
-      gstAmount,
-      transportCharges,
-      transportDetails,
-      grandTotal,
-      notes,
-      status: 'unpaid',
-      createdAt: new Date().toISOString()
-    };
- console.log('Creating invoice:', invoice);
-   const { data, error } = await supabase.from('sales').insert([invoice]).select();
+   const invoice = {
+  customer_id: customer.id,
+  invoice_date: new Date().toISOString().split('T')[0],
+  item_name: items.map(i => i.name).join(', '),
+  quantity: items.reduce((acc, i) => acc + i.quantity, 0),
+  rate_per_unit: items[0].rate, // You may want to average or customize this
+  subtotal,
+  gst_amount: gstAmount,
+  gst_percentage: gstRate,
+  total_amount: grandTotal,
+  transport_charges: transportCharges,
+  transport_company: transportDetails.companyName,
+  truck_number: transportDetails.truckNumber,
+  driver_contact: transportDetails.driverContact,
+  unit: items[0].unit,
+  delivery_notes: notes,
+  created_at: new Date().toISOString(),
+};
 
-  if (error) {
-    toast({
-      title: "Error",
-      description: "Failed to create invoice: " + error.message,
-      variant: "destructive"
-    });
-    return;
-  }
+console.log('Creating invoice:', invoice);
+const { data, error } = await supabase.from('sales').insert([invoice]).select();
 
+if (error) {
   toast({
-    title: "Success",
-    description: `Invoice ${data?.[0]?.id || ''} created successfully!`
+    title: "Error",
+    description: "Failed to create invoice: " + error.message,
+    variant: "destructive"
   });
+  return;
+}
 
-  if (onInvoiceCreated) {
-    onInvoiceCreated(data[0]);
-  }
+toast({
+  title: "Success",
+  description: `Invoice ${data?.[0]?.id || ''} created successfully!`
+});
 
-  onClose();
+if (onInvoiceCreated) {
+  onInvoiceCreated(data[0]); // still can pass full data
+}
+
+onClose();
+
 };
    
     
