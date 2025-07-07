@@ -109,8 +109,7 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
     return `INV/${year}/${month}/${random}`;
   };
 
-const handleSubmit = () => {
-  try {
+  const handleSubmit = () => {
     if (!validateForm()) {
       toast({
         title: "Validation Error",
