@@ -8,7 +8,9 @@ import {
   Trash2,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Download,
+  FileText
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,18 +35,65 @@ interface Invoice {
 }
 
 interface SalesInvoiceListProps {
-  customerId: string;
+  customerId?: string;
   invoices?: Invoice[];
   onDeleteInvoice?: (invoiceId: string) => void;
+  showHeader?: boolean;
+  title?: string;
 }
 
 const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({ 
   customerId, 
   invoices = [],
-  onDeleteInvoice
+  onDeleteInvoice,
+  showHeader = true,
+  title = "Sales Invoices"
 }) => {
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  const downloadInvoiceAsJSON = (invoice: Invoice) => {
+    const dataStr = JSON.stringify(invoice, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `invoice-${invoice.id}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const downloadInvoiceAsPDF = async (invoice: Invoice) => {
+    // Create a simple PDF content
+    const content = `
+Invoice ID: ${invoice.id}
+Date: ${invoice.date}
+Customer: ${invoice.customerName || 'N/A'}
+Total Amount: ₹${invoice.grandTotal.toLocaleString()}
+Status: ${invoice.status}
+
+Items:
+${invoice.items.map(item => `- ${item.name}: ${item.quantity} ${item.unit || ''} @ ₹${item.rate} = ₹${item.amount}`).join('\n')}
+
+GST Amount: ₹${invoice.gst_amount || 0}
+Transport Charges: ₹${invoice.transport_charges || 0}
+Subtotal: ₹${invoice.subtotal || 0}
+
+Delivery Notes: ${invoice.delivery_notes || 'N/A'}
+Transport Company: ${invoice.transport_company || 'N/A'}
+Truck Number: ${invoice.truck_number || 'N/A'}
+Driver Contact: ${invoice.driver_contact || 'N/A'}
+    `;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `invoice-${invoice.id}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -102,12 +151,14 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   return (
     <>
       <Card className="glass-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Receipt className="w-5 h-5" />
-            Sales Invoices ({invoices.length})
-          </CardTitle>
-        </CardHeader>
+        {showHeader && (
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Receipt className="w-5 h-5" />
+              {title} ({invoices.length})
+            </CardTitle>
+          </CardHeader>
+        )}
         <CardContent>
           {hasInvoices ? (
             <div className="space-y-3">
@@ -115,6 +166,7 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
                 <div
                   key={invoice.id}
                   className="activity-item relative"
+                  id={`invoice-${invoice.id}`}
                 >
                   {/* Three dots at top right */}
                   <div className="absolute top-3 right-3 z-10">
@@ -133,12 +185,28 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
                           Preview Invoice
                         </DropdownMenuItem>
                         <DropdownMenuItem 
-                          onClick={() => handleDeleteInvoice(invoice.id)}
-                          className="cursor-pointer hover:bg-destructive/20 text-destructive"
+                          onClick={() => downloadInvoiceAsJSON(invoice)}
+                          className="cursor-pointer hover:bg-muted/20"
                         >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete Invoice
+                          <FileText className="w-4 h-4 mr-2" />
+                          Download JSON
                         </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => downloadInvoiceAsPDF(invoice)}
+                          className="cursor-pointer hover:bg-muted/20"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download PDF
+                        </DropdownMenuItem>
+                        {onDeleteInvoice && (
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteInvoice(invoice.id)}
+                            className="cursor-pointer hover:bg-destructive/20 text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Invoice
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

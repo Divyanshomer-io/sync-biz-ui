@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
-import { Customer, useDeleteCustomer } from '@/hooks/useCustomers';
+import { Customer, useCustomers } from '@/hooks/useCustomers';
 import { useSales } from '@/hooks/useSales';
 import { usePayments } from '@/hooks/usePayments';
 

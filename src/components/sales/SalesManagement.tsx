@@ -16,6 +16,7 @@ import { usePayments } from '@/hooks/usePayments';
 import CustomerList from './CustomerList';
 import CustomerDetailPanel from './CustomerDetailPanel';
 import CreateCustomerModal from './CreateCustomerModal';
+import SalesInvoiceList from './SalesInvoiceList';
 
 const SalesManagement: React.FC = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -23,7 +24,7 @@ const SalesManagement: React.FC = () => {
   const [showAddCustomer, setShowAddCustomer] = useState(false);
 
   const { customers, refetch: refetchCustomers } = useCustomers();
-  const { refetch: refetchSales } = useSales();
+  const { sales, refetch: refetchSales } = useSales();
   const { refetch: refetchPayments } = usePayments();
 
   // Set up real-time data refresh
@@ -62,6 +63,31 @@ const SalesManagement: React.FC = () => {
   const handleCloseAddCustomer = () => {
     setShowAddCustomer(false);
   };
+
+  const handleCustomerCreated = () => {
+    setShowAddCustomer(false);
+    refetchCustomers();
+  };
+
+  // Transform sales to invoices format for display
+  const transformSalesToInvoices = (salesData: any[]) => {
+    return salesData.map(sale => ({
+      ...sale,
+      date: sale.invoice_date || sale.created_at,
+      grandTotal: sale.total_amount,
+      status: 'paid' as const,
+      items: [{
+        name: sale.item_name,
+        quantity: sale.quantity,
+        unit: sale.unit,
+        rate: sale.rate_per_unit,
+        amount: sale.subtotal
+      }],
+      customerName: customers.find(c => c.id === sale.customer_id)?.name || 'Unknown'
+    }));
+  };
+
+  const recentInvoices = transformSalesToInvoices(sales.slice(0, 10));
 
   if (selectedCustomer) {
     return (
@@ -134,13 +160,25 @@ const SalesManagement: React.FC = () => {
           onCustomerSelect={handleCustomerSelect}
           isEmpty={!hasData}
         />
+
+        {/* Recent Sales Invoices - Always show if there are sales */}
+        {sales.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Recent Sales Invoices</h2>
+            <SalesInvoiceList 
+              invoices={recentInvoices}
+              showHeader={false}
+              title="Recent Sales"
+            />
+          </div>
+        )}
       </main>
 
       {/* Add Customer Modal */}
       <CreateCustomerModal
         isOpen={showAddCustomer}
         onClose={handleCloseAddCustomer}
-        onCustomerCreated={handleCloseAddCustomer}
+        onCustomerCreated={handleCustomerCreated}
       />
     </div>
   );

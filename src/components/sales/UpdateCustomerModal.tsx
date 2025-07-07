@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Customer, useUpdateCustomer } from '@/hooks/useCustomers';
+import { Customer, useCustomers } from '@/hooks/useCustomers';
 
 interface UpdateCustomerModalProps {
   isOpen: boolean;
@@ -25,10 +25,10 @@ const UpdateCustomerModal: React.FC<UpdateCustomerModalProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     name: customer?.name || '',
-    contact: customer?.contact || '',
+    contact: customer?.contact || customer?.phone || '',
     email: customer?.email || '',
     address: customer?.address || '',
-    gst_number: customer?.gst_number || '',
+    gst_number: customer?.gst_number || customer?.gstin || '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,10 +38,10 @@ const UpdateCustomerModal: React.FC<UpdateCustomerModalProps> = ({
     if (customer) {
       setFormData({
         name: customer.name || '',
-        contact: customer.contact || '',
+        contact: customer.contact || customer.phone || '',
         email: customer.email || '',
         address: customer.address || '',
-        gst_number: customer.gst_number || '',
+        gst_number: customer.gst_number || customer.gstin || '',
       });
     }
   }, [customer]);
@@ -83,10 +83,10 @@ const UpdateCustomerModal: React.FC<UpdateCustomerModalProps> = ({
     if (customer) {
       setFormData({
         name: customer.name || '',
-        contact: customer.contact || '',
+        contact: customer.contact || customer.phone || '',
         email: customer.email || '',
         address: customer.address || '',
-        gst_number: customer.gst_number || '',
+        gst_number: customer.gst_number || customer.gstin || '',
       });
     }
     onClose();

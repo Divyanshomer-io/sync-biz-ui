@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { User, Phone, MapPin, FileText, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,20 +11,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Customer } from '@/hooks/useCustomers';
+import { useCustomers } from '@/hooks/useCustomers';
 
 interface CreateCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCustomerCreated: (customer: {
-    name: string;
-    email?: string;
-    phone?: string;
-    address?: string;
-    gstin?: string;
-    unitPreference?: string;
-    notes?: string;
-  }) => Promise<Customer>;
+  onCustomerCreated: () => void;
 }
 
 const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
@@ -32,6 +25,7 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
   onCustomerCreated
 }) => {
   const { toast } = useToast();
+  const { createCustomer } = useCustomers();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -57,7 +51,7 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onCustomerCreated(formData);
+      await createCustomer(formData);
       
       // Reset form
       setFormData({
@@ -70,6 +64,7 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
         notes: ''
       });
 
+      onCustomerCreated();
       onClose();
     } catch (error) {
       console.error('Error creating customer:', error);
