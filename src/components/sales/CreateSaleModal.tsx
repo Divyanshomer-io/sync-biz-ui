@@ -4,6 +4,7 @@ import { X, Plus, Minus, Calculator, User, Edit, Truck, FileText } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabase'; 
 import {
   Dialog,
   DialogContent,
@@ -109,15 +110,15 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
     return `INV/${year}/${month}/${random}`;
   };
 
-  const handleSubmit = () => {
-    if (!validateForm()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fix the errors in the form",
-        variant: "destructive"
-      });
-      return;
-    }
+ const handleSubmit = async () => {
+  if (!validateForm()) {
+    toast({
+      title: "Validation Error",
+      description: "Please fix the errors in the form",
+      variant: "destructive"
+    });
+    return;
+  }
 
     const invoice = {
       //id: generateInvoiceNumber(),
@@ -135,20 +136,42 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
       status: 'unpaid',
       createdAt: new Date().toISOString()
     };
+ console.log('Creating invoice:', invoice);
+   const { data, error } = await supabase.from('sales').insert([invoice]).select();
 
-    console.log('Creating invoice:', invoice);
-    
-    if (onInvoiceCreated) {
-      onInvoiceCreated(invoice);
-    }
-
+  if (error) {
     toast({
-      title: "Success",
-      description: `Invoice ${invoice.id} created successfully!`
+      title: "Error",
+      description: "Failed to create invoice: " + error.message,
+      variant: "destructive"
     });
+    return;
+  }
 
-    onClose();
-  };
+  toast({
+    title: "Success",
+    description: `Invoice ${data?.[0]?.id || ''} created successfully!`
+  });
+
+  if (onInvoiceCreated) {
+    onInvoiceCreated(data[0]);
+  }
+
+  onClose();
+};
+   
+    
+  //   if (onInvoiceCreated) {
+  //     onInvoiceCreated(invoice);
+  //   }
+
+  //   toast({
+  //     title: "Success",
+  //     description: `Invoice ${invoice.id} created successfully!`
+  //   });
+
+  //   onClose();
+  // };
 
   if (showPreview) {
     return (
