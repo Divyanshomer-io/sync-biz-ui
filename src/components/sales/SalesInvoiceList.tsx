@@ -215,7 +215,7 @@ Notes: ${invoice.delivery_notes || 'N/A'}
                     </DropdownMenu>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8 sm:pr-12">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         {getStatusIcon(invoice.status)}
@@ -233,7 +233,7 @@ Notes: ${invoice.delivery_notes || 'N/A'}
                       </div>
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center items-start sm:items-end gap-1 sm:gap-3 mt-2 sm:mt-0">
                       <div className="text-right">
                         <div className="font-semibold text-foreground">
                           ₹{invoice.grandTotal.toLocaleString()}
