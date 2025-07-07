@@ -107,40 +107,40 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   return (
     <div className="space-y-3">
-      {activities.map((activity) => (
-        <div key={`${activity.type}-${activity.id}`} className="activity-item">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
-              <activity.icon className={`w-5 h-5 ${activity.color}`} />
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-foreground truncate">
-                {activity.title}
-              </p>
-              <p className="text-sm text-muted-foreground truncate">
-                {activity.description}
-              </p>
-              <div className="flex items-center gap-1 mt-1">
-                <Clock className="w-3 h-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {activity.time}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-end gap-2">
-            <div className="text-sm font-medium text-foreground">
-              ₹{activity.amount.toLocaleString()}
-            </div>
-            <span className={`${getStatusColor(activity.status)}`}>
-              {getStatusText(activity.status)}
-            </span>
+  {activities.map((activity) => (
+    <div
+      key={`${activity.type}-${activity.id}`}
+      className="activity-item flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card/10 rounded-lg p-3"
+    >
+      {/* Icon + Title + Description */}
+      <div className="flex gap-3 sm:items-center w-full sm:w-auto">
+        <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+          <activity.icon className={`w-5 h-5 ${activity.color}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-foreground truncate">{activity.title}</p>
+          <p className="text-sm text-muted-foreground break-words">
+            {activity.description}
+          </p>
+          <div className="flex items-center gap-1 mt-1">
+            <Clock className="w-3 h-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">{activity.time}</span>
           </div>
         </div>
-      ))}
+      </div>
+
+      {/* Amount and Status */}
+      <div className="flex flex-col sm:items-end sm:justify-center items-start w-full sm:w-auto">
+        <div className="text-sm font-medium text-foreground break-words sm:text-right">
+          ₹{activity.amount.toLocaleString()}
+        </div>
+        <span className={`${getStatusColor(activity.status)}`}>
+          {getStatusText(activity.status)}
+        </span>
+      </div>
     </div>
+  ))}
+</div>
   );
 };
 
