@@ -21,12 +21,12 @@ interface VendorListProps {
 const VendorList: React.FC<VendorListProps> = ({ vendors, onVendorSelect, isEmpty }) => {
   if (isEmpty) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12 px-4">
         <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <Building2 className="w-10 h-10 text-muted-foreground" />
         </div>
         <h3 className="text-xl font-semibold text-foreground mb-2">No Vendors Yet</h3>
-        <p className="text-muted-foreground max-w-md mx-auto">
+        <p className="text-muted-foreground max-w-md mx-auto text-sm">
           Add your first vendor to start tracking purchases and managing supplier relationships.
         </p>
       </div>
@@ -35,7 +35,7 @@ const VendorList: React.FC<VendorListProps> = ({ vendors, onVendorSelect, isEmpt
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-1">
         <h2 className="text-lg font-semibold text-foreground">Vendors ({vendors.length})</h2>
       </div>
       
@@ -47,15 +47,16 @@ const VendorList: React.FC<VendorListProps> = ({ vendors, onVendorSelect, isEmpt
             onClick={() => onVendorSelect(vendor.id)}
           >
             <CardContent className="p-4">
-              <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
+              <div className="space-y-4">
+                {/* Vendor Info Row */}
+                <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                     <Building2 className="w-6 h-6 text-primary" />
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground truncate">{vendor.name}</h3>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
+                    <div className="flex flex-col gap-1 text-sm text-muted-foreground mt-1">
                       {vendor.contact && (
                         <div className="flex items-center gap-1">
                           <Phone className="w-3 h-3 flex-shrink-0" />
@@ -75,42 +76,39 @@ const VendorList: React.FC<VendorListProps> = ({ vendors, onVendorSelect, isEmpt
                       </div>
                     )}
                   </div>
+                  
+                  <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                 </div>
                 
-                <div className="flex items-center justify-between lg:justify-end gap-4 lg:gap-6">
-                  {/* Purchase Summary */}
-                  <div className="text-center lg:text-right">
-                    <div className="flex items-center gap-2 text-sm">
-                      <DollarSign className="w-4 h-4 text-blue-500 lg:hidden" />
-                      <div>
-                        <div className="font-semibold text-foreground">
-                          ₹{(vendor.totalPurchases || 0).toLocaleString()}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Total Purchases</div>
+                {/* Financial Summary Row */}
+                <div className="flex items-center justify-between gap-4 pt-2 border-t border-border/50">
+                  {/* Total Purchases */}
+                  <div className="flex items-center gap-2 flex-1">
+                    <DollarSign className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-foreground truncate">
+                        ₹{(vendor.totalPurchases || 0).toLocaleString()}
                       </div>
+                      <div className="text-xs text-muted-foreground">Total Purchases</div>
                     </div>
                   </div>
                   
                   {/* Payment Status */}
-                  <div className="text-center lg:text-right">
-                    <div className="flex items-center gap-2 text-sm">
-                      {(vendor.pending || 0) > 0 ? (
-                        <TrendingDown className="w-4 h-4 text-red-400 lg:hidden" />
-                      ) : (
-                        <TrendingUp className="w-4 h-4 text-green-500 lg:hidden" />
-                      )}
-                      <div>
-                        <div className={`font-semibold ${(vendor.pending || 0) > 0 ? 'text-red-400' : 'text-green-500'}`}>
-                          ₹{(vendor.pending || 0).toLocaleString()}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {(vendor.pending || 0) > 0 ? 'Pending' : 'Paid Up'}
-                        </div>
+                  <div className="flex items-center gap-2 flex-1">
+                    {(vendor.pending || 0) > 0 ? (
+                      <TrendingDown className="w-4 h-4 text-red-400 flex-shrink-0" />
+                    ) : (
+                      <TrendingUp className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <div className={`text-sm font-semibold truncate ${(vendor.pending || 0) > 0 ? 'text-red-400' : 'text-green-500'}`}>
+                        ₹{(vendor.pending || 0).toLocaleString()}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {(vendor.pending || 0) > 0 ? 'Pending' : 'Paid Up'}
                       </div>
                     </div>
                   </div>
-                  
-                  <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                 </div>
               </div>
             </CardContent>

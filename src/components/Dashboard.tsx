@@ -393,7 +393,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
           />
         </section>
 
-        {/* Recent Activity */}
+        {/* Recent Activity - Now includes purchases and payments made */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
@@ -411,7 +411,14 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
               ))}
             </div>
           </div>
-          <ActivityFeed isEmpty={!hasData} timeFilter={timeFilter} sales={filteredSales} payments={filteredPayments} />
+          <ActivityFeed 
+            isEmpty={!hasData} 
+            timeFilter={timeFilter} 
+            sales={filteredSales} 
+            payments={filteredPayments}
+            purchases={filteredPurchases}
+            paymentsMade={filteredPaymentsMade}
+          />
         </section>
       </main>
 

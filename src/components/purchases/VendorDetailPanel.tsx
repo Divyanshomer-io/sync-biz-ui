@@ -8,11 +8,18 @@ import {
   Plus,
   CreditCard,
   Edit,
-  Trash2
+  Trash2,
+  MoreVertical
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import MetricCard from '@/components/MetricCard';
 import { Vendor } from '@/hooks/useVendors';
 import { useVendorPurchases } from '@/hooks/usePurchases';
@@ -103,62 +110,94 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={onBack}
-              className="p-2"
+              className="p-2 flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Building2 className="w-5 h-5 text-primary" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">{vendor.name}</h1>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">{vendor.name}</h1>
                 {vendor.gstin && (
-                  <p className="text-sm text-muted-foreground">GSTIN: {vendor.gstin}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">GSTIN: {vendor.gstin}</p>
                 )}
               </div>
             </div>
           </div>
           
+          {/* Mobile Actions Menu */}
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowUpdateVendor(true)}
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowDeleteVendor(true)}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowCreatePurchase(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Purchase
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowAddPayment(true)}
-            >
-              <CreditCard className="w-4 h-4 mr-2" />
-              Add Payment
-            </Button>
+            <div className="hidden sm:flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowUpdateVendor(true)}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowDeleteVendor(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowCreatePurchase(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Purchase
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowAddPayment(true)}
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Add Payment
+              </Button>
+            </div>
+
+            {/* Mobile Dropdown Menu */}
+            <div className="sm:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setShowCreatePurchase(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Purchase
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowAddPayment(true)}>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Add Payment
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowUpdateVendor(true)}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Vendor
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowDeleteVendor(true)}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Vendor
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
@@ -168,7 +207,7 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
         {/* KPI Metrics Cards */}
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Vendor Overview</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {metrics.map((metric, index) => (
               <MetricCard
                 key={index}
@@ -187,10 +226,10 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="purchases">Purchases</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="info">Info</TabsTrigger>
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="purchases" className="text-xs sm:text-sm">Purchases</TabsTrigger>
+            <TabsTrigger value="payments" className="text-xs sm:text-sm">Payments</TabsTrigger>
+            <TabsTrigger value="info" className="text-xs sm:text-sm">Info</TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview" className="space-y-4">

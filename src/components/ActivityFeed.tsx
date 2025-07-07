@@ -1,21 +1,25 @@
 
 import React from 'react';
-import { Receipt, CreditCard, Users, Clock } from 'lucide-react';
+import { Receipt, CreditCard, Users, Clock, Package, DollarSign } from 'lucide-react';
 
 interface ActivityFeedProps {
   isEmpty?: boolean;
   timeFilter?: string;
   sales?: any[];
   payments?: any[];
+  purchases?: any[];
+  paymentsMade?: any[];
 }
 
 const ActivityFeed: React.FC<ActivityFeedProps> = ({ 
   isEmpty = false, 
   timeFilter = '1month',
   sales = [],
-  payments = []
+  payments = [],
+  purchases = [],
+  paymentsMade = []
 }) => {
-  // Combine and sort sales and payments by date
+  // Combine and sort sales, payments, purchases, and payments made by date
   const activities = [
     ...sales.map(sale => ({
       id: sale.id,
@@ -25,7 +29,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       time: new Date(sale.created_at).toLocaleDateString('en-IN'),
       status: 'completed',
       icon: Receipt,
-      amount: Number(sale.total_amount)
+      amount: Number(sale.total_amount),
+      color: 'text-green-500'
     })),
     ...payments.map(payment => ({
       id: payment.id,
@@ -35,7 +40,30 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       time: new Date(payment.created_at).toLocaleDateString('en-IN'),
       status: 'completed',
       icon: CreditCard,
-      amount: Number(payment.amount_paid)
+      amount: Number(payment.amount_paid),
+      color: 'text-green-500'
+    })),
+    ...purchases.map(purchase => ({
+      id: purchase.id,
+      type: 'purchase',
+      title: `Purchase - ${purchase.item}`,
+      description: `${purchase.quantity} units @ ₹${purchase.rate} - ₹${Number(purchase.total_amount).toLocaleString()}`,
+      time: new Date(purchase.created_at).toLocaleDateString('en-IN'),
+      status: 'completed',
+      icon: Package,
+      amount: Number(purchase.total_amount),
+      color: 'text-blue-500'
+    })),
+    ...paymentsMade.map(payment => ({
+      id: payment.id,
+      type: 'payment_made',
+      title: 'Payment Made',
+      description: `₹${Number(payment.amount).toLocaleString()} via ${payment.mode || 'cash'}`,
+      time: new Date(payment.created_at).toLocaleDateString('en-IN'),
+      status: 'completed',
+      icon: DollarSign,
+      amount: Number(payment.amount),
+      color: 'text-orange-500'
     }))
   ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 10);
 
@@ -82,8 +110,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       {activities.map((activity) => (
         <div key={`${activity.type}-${activity.id}`} className="activity-item">
           <div className="flex items-center gap-3 flex-1">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <activity.icon className="w-5 h-5 text-primary" />
+            <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+              <activity.icon className={`w-5 h-5 ${activity.color}`} />
             </div>
             
             <div className="flex-1 min-w-0">
