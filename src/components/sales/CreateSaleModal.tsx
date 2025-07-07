@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Plus, Minus, Calculator, User, Edit, Truck, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,11 +12,54 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
+interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+  unitPreference?: string;
+}
+
+interface Item {
+  id: number;
+  name: string;
+  quantity: number;
+  unit: string;
+  rate: number;
+  amount: number;
+}
+
+interface TransportDetails {
+  companyName: string;
+  truckNumber: string;
+  driverContact: string;
+}
+
+interface Invoice {
+  id?: string;
+  customer_id: string;
+  invoice_date: string;
+  item_name: string;
+  quantity: number;
+  rate_per_unit: number;
+  subtotal: number;
+  gst_amount: number;
+  gst_percentage: number;
+  total_amount: number;
+  transport_charges: number;
+  transport_company: string;
+  truck_number: string;
+  driver_contact: string;
+  unit: string;
+  delivery_notes: string;
+  created_at: string;
+}
+
 interface CreateSaleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  customer: any;
-  onInvoiceCreated?: (invoice: any) => void;
+  customer: Customer;
+  onInvoiceCreated?: (invoice: Invoice) => void;
 }
 
 const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
@@ -28,23 +70,24 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
 }) => {
   const { toast } = useToast();
   const [showPreview, setShowPreview] = useState(false);
-  const [items, setItems] = useState([
+  const [items, setItems] = useState<Item[]>([
     { id: 1, name: '', quantity: 1, unit: 'kg', rate: 0, amount: 0 }
   ]);
   const [gstRate, setGstRate] = useState(18);
   const [transportCharges, setTransportCharges] = useState(0);
-  const [transportDetails, setTransportDetails] = useState({
+  const [transportDetails, setTransportDetails] = useState<TransportDetails>({
     companyName: '',
     truckNumber: '',
     driverContact: ''
   });
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const units = ['kg', 'pieces', 'litres', 'meters', 'tons', 'boxes'];
 
   const addItem = () => {
-    const newItem = {
+    const newItem: Item = {
       id: Date.now(),
       name: '',
       quantity: 1,
@@ -61,12 +104,12 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
     }
   };
 
-  const updateItem = (id: number, field: string, value: any) => {
+  const updateItem = (id: number, field: keyof Item, value: string | number) => {
     setItems(items.map(item => {
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value };
         if (field === 'quantity' || field === 'rate') {
-          updatedItem.amount = updatedItem.quantity * updatedItem.rate;
+          updatedItem.amount = Number(updatedItem.quantity) * Number(updatedItem.rate);
         }
         return updatedItem;
       }
@@ -74,15 +117,19 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
     }));
     
     // Clear errors for this field
-    if (errors[`item-${id}-${field}`]) {
-      setErrors(prev => ({ ...prev, [`item-${id}-${field}`]: '' }));
+    const errorKey = `item-${id}-${field}`;
+    if (errors[errorKey]) {
+      setErrors(prev => {
+        const { [errorKey]: _, ...rest } = prev;
+        return rest;
+      });
     }
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    items.forEach((item, index) => {
+    items.forEach((item) => {
       if (!item.name.trim()) {
         newErrors[`item-${item.id}-name`] = 'Product name is required';
       }
@@ -94,6 +141,16 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
       }
     });
 
+    // Validate GST rate
+    if (gstRate < 0 || gstRate > 100) {
+      newErrors['gstRate'] = 'GST rate must be between 0 and 100';
+    }
+
+    // Validate transport charges
+    if (transportCharges < 0) {
+      newErrors['transportCharges'] = 'Transport charges cannot be negative';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -102,7 +159,7 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
   const gstAmount = (subtotal * gstRate) / 100;
   const grandTotal = subtotal + gstAmount + transportCharges;
 
-  const generateInvoiceNumber = () => {
+  const generateInvoiceNumber = (): string => {
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -110,72 +167,132 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
     return `INV/${year}/${month}/${random}`;
   };
 
- const handleSubmit = async () => {
-  if (!validateForm()) {
-    toast({
-      title: "Validation Error",
-      description: "Please fix the errors in the form",
-      variant: "destructive"
-    });
-    return;
+  const calculateAverageRate = (items: Item[]): number => {
+    if (items.length === 0) return 0;
+    const totalValue = items.reduce((sum, item) => sum + item.amount, 0);
+    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+    return totalQuantity > 0 ? totalValue / totalQuantity : 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!customer?.id) {
+      toast({
+        title: "Error",
+        description: "Customer information is missing",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const invoice: Omit<Invoice, 'id'> = {
+        customer_id: customer.id,
+        invoice_date: new Date().toISOString().split('T')[0],
+        item_name: items.map(i => i.name).join(', '),
+        quantity: items.reduce((acc, i) => acc + i.quantity, 0),
+        rate_per_unit: calculateAverageRate(items),
+        subtotal: Number(subtotal.toFixed(2)),
+        gst_amount: Number(gstAmount.toFixed(2)),
+        gst_percentage: gstRate,
+        total_amount: Number(grandTotal.toFixed(2)),
+        transport_charges: Number(transportCharges.toFixed(2)),
+        transport_company: transportDetails.companyName || '',
+        truck_number: transportDetails.truckNumber || '',
+        driver_contact: transportDetails.driverContact || '',
+        unit: items[0]?.unit || 'kg',
+        delivery_notes: notes || '',
+        created_at: new Date().toISOString(),
+      };
+
+      console.log('Creating invoice:', invoice);
+      
+      const { data, error } = await supabase
+        .from('sales')
+        .insert([invoice])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        toast({
+          title: "Error",
+          description: `Failed to create invoice: ${error.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!data) {
+        toast({
+          title: "Error",
+          description: "No data returned from database",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: `Invoice ${data.id} created successfully!`,
+        variant: "default"
+      });
+
+      if (onInvoiceCreated) {
+        onInvoiceCreated(data);
+      }
+
+      // Reset form
+      setItems([{ id: 1, name: '', quantity: 1, unit: 'kg', rate: 0, amount: 0 }]);
+      setGstRate(18);
+      setTransportCharges(0);
+      setTransportDetails({ companyName: '', truckNumber: '', driverContact: '' });
+      setNotes('');
+      setErrors({});
+      setShowPreview(false);
+
+      onClose();
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error", 
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleInputChange = (
+    setter: React.Dispatch<React.SetStateAction<number>>,
+    value: string,
+    errorKey: string
+  ) => {
+    const numValue = Number(value);
+    setter(numValue);
+    if (errors[errorKey]) {
+      setErrors(prev => {
+        const { [errorKey]: _, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  // Early return if customer is not provided
+  if (!customer) {
+    return null;
   }
-
-   const invoice = {
-  customer_id: customer.id,
-  invoice_date: new Date().toISOString().split('T')[0],
-  item_name: items.map(i => i.name).join(', '),
-  quantity: items.reduce((acc, i) => acc + i.quantity, 0),
-  rate_per_unit: items[0].rate, // You may want to average or customize this
-  subtotal,
-  gst_amount: gstAmount,
-  gst_percentage: gstRate,
-  total_amount: grandTotal,
-  transport_charges: transportCharges,
-  transport_company: transportDetails.companyName,
-  truck_number: transportDetails.truckNumber,
-  driver_contact: transportDetails.driverContact,
-  unit: items[0].unit,
-  delivery_notes: notes,
-  created_at: new Date().toISOString(),
-};
-
-console.log('Creating invoice:', invoice);
-const { data, error } = await supabase.from('sales').insert([invoice]).select();
-
-if (error) {
-  toast({
-    title: "Error",
-    description: "Failed to create invoice: " + error.message,
-    variant: "destructive"
-  });
-  return;
-}
-
-toast({
-  title: "Success",
-  description: `Invoice ${data?.[0]?.id || ''} created successfully!`
-});
-
-if (onInvoiceCreated) {
-  onInvoiceCreated(data[0]); // still can pass full data
-}
-
-onClose();
-
-};
-   
-    
-  //   if (onInvoiceCreated) {
-  //     onInvoiceCreated(invoice);
-  //   }
-
-  //   toast({
-  //     title: "Success",
-  //     description: `Invoice ${invoice.id} created successfully!`
-  //   });
-
-  //   onClose();
-  // };
 
   if (showPreview) {
     return (
@@ -221,7 +338,7 @@ onClose();
                     <tr key={item.id} className="border-t border-border/50">
                       <td className="p-3 text-sm">{item.name}</td>
                       <td className="p-3 text-sm text-right">{item.quantity} {item.unit}</td>
-                      <td className="p-3 text-sm text-right">₹{item.rate}</td>
+                      <td className="p-3 text-sm text-right">₹{item.rate.toFixed(2)}</td>
                       <td className="p-3 text-sm text-right">₹{item.amount.toFixed(2)}</td>
                     </tr>
                   ))}
@@ -253,20 +370,46 @@ onClose();
               </div>
             </div>
 
+            {/* Transport Details */}
+            {(transportDetails.companyName || transportDetails.truckNumber || transportDetails.driverContact) && (
+              <div className="bg-card/40 rounded-lg p-4 space-y-2">
+                <h4 className="font-medium text-foreground">Transport Details</h4>
+                {transportDetails.companyName && (
+                  <p className="text-sm text-muted-foreground">Company: {transportDetails.companyName}</p>
+                )}
+                {transportDetails.truckNumber && (
+                  <p className="text-sm text-muted-foreground">Truck: {transportDetails.truckNumber}</p>
+                )}
+                {transportDetails.driverContact && (
+                  <p className="text-sm text-muted-foreground">Driver: {transportDetails.driverContact}</p>
+                )}
+              </div>
+            )}
+
+            {/* Notes */}
+            {notes && (
+              <div className="bg-card/40 rounded-lg p-4">
+                <h4 className="font-medium text-foreground mb-2">Delivery Notes</h4>
+                <p className="text-sm text-muted-foreground">{notes}</p>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-3">
               <Button
                 variant="outline"
                 onClick={() => setShowPreview(false)}
                 className="flex-1"
+                disabled={isSubmitting}
               >
                 Back to Edit
               </Button>
               <Button
                 onClick={handleSubmit}
                 className="flex-1 bg-primary hover:bg-primary/90"
+                disabled={isSubmitting}
               >
-                Create Invoice
+                {isSubmitting ? 'Creating...' : 'Create Invoice'}
               </Button>
             </div>
           </div>
@@ -287,26 +430,24 @@ onClose();
 
         <div className="space-y-6">
           {/* Customer Info Recap */}
-          {customer && (
-            <div className="bg-card/40 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-foreground">{customer.name}</div>
-                    <div className="text-sm text-muted-foreground">{customer.phone}</div>
-                    <div className="text-xs text-muted-foreground">{customer.address}</div>
-                  </div>
+          <div className="bg-card/40 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-primary" />
                 </div>
-                <Button variant="ghost" size="sm">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Info
-                </Button>
+                <div>
+                  <div className="font-medium text-foreground">{customer.name}</div>
+                  <div className="text-sm text-muted-foreground">{customer.phone}</div>
+                  <div className="text-xs text-muted-foreground">{customer.address}</div>
+                </div>
               </div>
+              <Button variant="ghost" size="sm">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Info
+              </Button>
             </div>
-          )}
+          </div>
 
           {/* Items Section */}
           <div className="space-y-4">
@@ -357,6 +498,7 @@ onClose();
                     <Input
                       type="number"
                       min="0"
+                      step="0.01"
                       value={item.quantity}
                       onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
                       className={errors[`item-${item.id}-quantity`] ? 'border-red-500' : ''}
@@ -382,6 +524,7 @@ onClose();
                     <Input
                       type="number"
                       min="0"
+                      step="0.01"
                       placeholder="0.00"
                       value={item.rate}
                       onChange={(e) => updateItem(item.id, 'rate', Number(e.target.value))}
@@ -445,10 +588,16 @@ onClose();
                 <Label className="text-sm">Transport Charges</Label>
                 <Input
                   type="number"
+                  min="0"
+                  step="0.01"
                   placeholder="0.00"
                   value={transportCharges}
-                  onChange={(e) => setTransportCharges(Number(e.target.value))}
+                  onChange={(e) => handleInputChange(setTransportCharges, e.target.value, 'transportCharges')}
+                  className={errors['transportCharges'] ? 'border-red-500' : ''}
                 />
+                {errors['transportCharges'] && (
+                  <p className="text-xs text-red-500 mt-1">{errors['transportCharges']}</p>
+                )}
               </div>
             </div>
           </div>
@@ -461,9 +610,16 @@ onClose();
                 <Label className="text-sm">GST Rate (%)</Label>
                 <Input
                   type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
                   value={gstRate}
-                  onChange={(e) => setGstRate(Number(e.target.value))}
+                  onChange={(e) => handleInputChange(setGstRate, e.target.value, 'gstRate')}
+                  className={errors['gstRate'] ? 'border-red-500' : ''}
                 />
+                {errors['gstRate'] && (
+                  <p className="text-xs text-red-500 mt-1">{errors['gstRate']}</p>
+                )}
               </div>
             </div>
           </div>
@@ -507,6 +663,7 @@ onClose();
               variant="outline"
               onClick={onClose}
               className="flex-1"
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
@@ -514,15 +671,17 @@ onClose();
               onClick={() => setShowPreview(true)}
               variant="outline"
               className="flex-1"
+              disabled={isSubmitting}
             >
               Preview
             </Button>
             <Button
               onClick={handleSubmit}
               className="flex-1 bg-primary hover:bg-primary/90"
+              disabled={isSubmitting}
             >
               <Calculator className="w-4 h-4 mr-2" />
-              Create Invoice
+              {isSubmitting ? 'Creating...' : 'Create Invoice'}
             </Button>
           </div>
         </div>
