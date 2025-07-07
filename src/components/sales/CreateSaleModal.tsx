@@ -120,7 +120,7 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
     }
 
     const invoice = {
-      id: generateInvoiceNumber(),
+      //id: generateInvoiceNumber(),
       customerId: customer.id,
       customerName: customer.name,
       date: new Date().toISOString().split('T')[0],
