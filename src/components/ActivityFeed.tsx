@@ -130,13 +130,13 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       </div>
 
       {/* Amount and Status */}
-      <div className="flex flex-col items-end gap-2">
-  <div className="text-sm font-medium text-foreground">
-    ₹{activity.amount.toLocaleString() getStatusText(activity.status)}
+      <div className="flex items-center justify-end gap-2 text-sm font-medium text-foreground">
+  <div>
+    ₹{activity.amount.toLocaleString()}
   </div>
-{/*   <span className={`${getStatusColor(activity.status)}`}>
+  <span className={`${getStatusColor(activity.status)}`}>
     {getStatusText(activity.status)}
-  </span> */}
+  </span>
 </div>
     </div>
   ))}
