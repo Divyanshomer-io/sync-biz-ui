@@ -145,7 +145,7 @@ const handleSubmit = () => {
 
     toast({
       title: "Success",
-      //description: `Invoice ${invoice.id} created successfully!`
+      description: `Invoice ${invoice.id} created successfully!`
     });
 
     onClose();
