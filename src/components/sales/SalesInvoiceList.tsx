@@ -65,25 +65,29 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   };
 
   const downloadInvoiceAsPDF = async (invoice: Invoice) => {
-    // Create a simple PDF content
+    // Create invoice content as text (simplified PDF alternative)
     const content = `
-Invoice ID: ${invoice.id}
-Date: ${invoice.date}
+INVOICE: ${invoice.id}
+Date: ${new Date(invoice.date).toLocaleDateString('en-IN')}
 Customer: ${invoice.customerName || 'N/A'}
-Total Amount: ₹${invoice.grandTotal.toLocaleString()}
-Status: ${invoice.status}
 
 Items:
-${invoice.items.map(item => `- ${item.name}: ${item.quantity} ${item.unit || ''} @ ₹${item.rate} = ₹${item.amount}`).join('\n')}
+${invoice.items.map(item => `• ${item.name}: ${item.quantity} ${item.unit || ''} @ ₹${item.rate} = ₹${item.amount}`).join('\n')}
 
+Subtotal: ₹${invoice.subtotal || 0}
 GST Amount: ₹${invoice.gst_amount || 0}
 Transport Charges: ₹${invoice.transport_charges || 0}
-Subtotal: ₹${invoice.subtotal || 0}
+Total Amount: ₹${invoice.grandTotal}
 
-Delivery Notes: ${invoice.delivery_notes || 'N/A'}
-Transport Company: ${invoice.transport_company || 'N/A'}
+Payment Status: ${invoice.status.toUpperCase()}
+${invoice.paidAmount ? `Paid Amount: ₹${invoice.paidAmount}` : ''}
+
+Transport Details:
+Company: ${invoice.transport_company || 'N/A'}
 Truck Number: ${invoice.truck_number || 'N/A'}
 Driver Contact: ${invoice.driver_contact || 'N/A'}
+
+Notes: ${invoice.delivery_notes || 'N/A'}
     `;
 
     const blob = new Blob([content], { type: 'text/plain' });
@@ -111,13 +115,13 @@ Driver Contact: ${invoice.driver_contact || 'N/A'}
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
-        return 'status-paid';
+        return 'bg-green-500/10 text-green-500 border-green-500/20';
       case 'unpaid':
-        return 'status-overdue';
+        return 'bg-red-500/10 text-red-500 border-red-500/20';
       case 'partial':
-        return 'status-pending';
+        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
       default:
-        return 'bg-muted/20 text-muted-foreground';
+        return 'bg-muted/20 text-muted-foreground border-muted/20';
     }
   };
 
@@ -165,7 +169,7 @@ Driver Contact: ${invoice.driver_contact || 'N/A'}
               {invoices.map((invoice) => (
                 <div
                   key={invoice.id}
-                  className="activity-item relative"
+                  className="activity-item relative bg-card/20 border border-border/50 rounded-lg p-4"
                   id={`invoice-${invoice.id}`}
                 >
                   {/* Three dots at top right */}
@@ -211,13 +215,13 @@ Driver Contact: ${invoice.driver_contact || 'N/A'}
                     </DropdownMenu>
                   </div>
 
-                  <div className="flex items-center justify-between w-full pr-12">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8 sm:pr-12">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         {getStatusIcon(invoice.status)}
                       </div>
-                      <div>
-                        <div className="font-medium text-foreground">{invoice.id}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-foreground truncate">{invoice.id}</div>
                         <div className="text-sm text-muted-foreground">
                           {formatDate(invoice.date)} • {getItemsSummary(invoice.items)}
                         </div>
@@ -229,7 +233,7 @@ Driver Contact: ${invoice.driver_contact || 'N/A'}
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                       <div className="text-right">
                         <div className="font-semibold text-foreground">
                           ₹{invoice.grandTotal.toLocaleString()}
@@ -241,7 +245,7 @@ Driver Contact: ${invoice.driver_contact || 'N/A'}
                         )}
                       </div>
                       
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(invoice.status)} whitespace-nowrap`}>
                         {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                       </span>
                     </div>

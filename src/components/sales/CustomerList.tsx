@@ -63,14 +63,14 @@ const CustomerList: React.FC<CustomerListProps> = ({ customers, onCustomerSelect
                           <span className="truncate">{customer.contact}</span>
                         </div>
                       )}
-                      {customer.email && (
+                      {customer.email && customer.email !== `${customer.name.toLowerCase().replace(/\s+/g, '')}@example.com` && (
                         <div className="flex items-center gap-1">
                           <Mail className="w-3 h-3 flex-shrink-0" />
                           <span className="truncate">{customer.email}</span>
                         </div>
                       )}
                     </div>
-                    {customer.gst_number && (
+                    {customer.gst_number && customer.gst_number !== 'GSTIN not provided' && (
                       <div className="text-xs text-muted-foreground mt-1">
                         GSTIN: {customer.gst_number}
                       </div>
@@ -83,9 +83,9 @@ const CustomerList: React.FC<CustomerListProps> = ({ customers, onCustomerSelect
                 {/* Financial Summary Row */}
                 <div className="flex items-center justify-between gap-4 pt-2 border-t border-border/50">
                   {/* Total Sales */}
-                  <div className="flex items-center gap-2 flex-1">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
                     <DollarSign className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold text-foreground truncate">
                         ₹{(customer.totalSales || 0).toLocaleString()}
                       </div>
@@ -94,13 +94,13 @@ const CustomerList: React.FC<CustomerListProps> = ({ customers, onCustomerSelect
                   </div>
                   
                   {/* Payment Status */}
-                  <div className="flex items-center gap-2 flex-1">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
                     {(customer.pending || 0) > 0 ? (
                       <TrendingDown className="w-4 h-4 text-red-400 flex-shrink-0" />
                     ) : (
                       <TrendingUp className="w-4 h-4 text-green-500 flex-shrink-0" />
                     )}
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className={`text-sm font-semibold truncate ${(customer.pending || 0) > 0 ? 'text-red-400' : 'text-green-500'}`}>
                         ₹{(customer.pending || 0).toLocaleString()}
                       </div>

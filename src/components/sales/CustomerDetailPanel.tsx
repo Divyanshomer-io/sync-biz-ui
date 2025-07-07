@@ -76,29 +76,34 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
     onBack();
   };
 
+  const handlePaymentAdded = () => {
+    setShowAddPayment(false);
+    // The payment modal will handle the refresh
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={onBack}>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <Button variant="ghost" size="sm" onClick={onBack} className="flex-shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                 <User className="w-5 h-5 text-primary" />
               </div>
-              <div>
-                <h1 className="text-lg font-semibold text-foreground">{customer.name}</h1>
-                {customer.gst_number && (
-                  <p className="text-xs text-muted-foreground">GSTIN: {customer.gst_number}</p>
+              <div className="min-w-0">
+                <h1 className="text-lg font-semibold text-foreground truncate">{customer.name}</h1>
+                {customer.gst_number && customer.gst_number !== 'GSTIN not provided' && (
+                  <p className="text-xs text-muted-foreground truncate">GSTIN: {customer.gst_number}</p>
                 )}
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button variant="ghost" size="sm" onClick={() => setShowEditModal(true)}>
               <Edit className="w-4 h-4" />
             </Button>
@@ -112,7 +117,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
       {/* Main Content */}
       <main className="pt-16 pb-20 px-4 space-y-6">
         {/* Quick Actions */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Button 
             className="flex-1"
             onClick={() => setShowCreateSale(true)}
@@ -131,13 +136,13 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <Card className="glass-card">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
                 ₹{totalSales.toLocaleString()}
               </div>
-              <div className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+              <div className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1">
                 <DollarSign className="w-3 h-3" />
                 Total Sales
               </div>
@@ -145,11 +150,11 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
           </Card>
 
           <Card className="glass-card">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
                 ₹{totalPaid.toLocaleString()}
               </div>
-              <div className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+              <div className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 Received
               </div>
@@ -157,11 +162,11 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
           </Card>
 
           <Card className="glass-card">
-            <CardContent className="p-4 text-center">
-              <div className={`text-2xl font-bold ${outstanding > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className={`text-xl sm:text-2xl font-bold ${outstanding > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>
                 ₹{outstanding.toLocaleString()}
               </div>
-              <div className={`text-sm flex items-center justify-center gap-1 ${outstanding > 0 ? 'text-red-600/80 dark:text-red-400/80' : 'text-muted-foreground/80'}`}>
+              <div className={`text-xs sm:text-sm flex items-center justify-center gap-1 ${outstanding > 0 ? 'text-red-600/80 dark:text-red-400/80' : 'text-muted-foreground/80'}`}>
                 <Package className="w-3 h-3" />
                 Outstanding
               </div>
@@ -169,11 +174,11 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
           </Card>
 
           <Card className="glass-card">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-primary">
                 ₹{thisMonthSales.toLocaleString()}
               </div>
-              <div className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+              <div className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1">
                 <Calendar className="w-3 h-3" />
                 This Month
               </div>
@@ -184,10 +189,10 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="sales">Sales</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="info">Info</TabsTrigger>
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="sales" className="text-xs sm:text-sm">Sales</TabsTrigger>
+            <TabsTrigger value="payments" className="text-xs sm:text-sm">Payments</TabsTrigger>
+            <TabsTrigger value="info" className="text-xs sm:text-sm">Info</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -248,7 +253,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
         isOpen={showAddPayment}
         onClose={() => setShowAddPayment(false)}
         customer={customer}
-        onPaymentAdded={() => setShowAddPayment(false)}
+        onPaymentAdded={handlePaymentAdded}
       />
 
       <DeleteCustomerModal
