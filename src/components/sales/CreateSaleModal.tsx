@@ -109,7 +109,8 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
     return `INV/${year}/${month}/${random}`;
   };
 
-  const handleSubmit = () => {
+const handleSubmit = () => {
+  try {
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -144,7 +145,7 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
 
     toast({
       title: "Success",
-      description: `Invoice ${invoice.id} created successfully!`
+      //description: `Invoice ${invoice.id} created successfully!`
     });
 
     onClose();
