@@ -6,7 +6,9 @@ import {
   Package,
   Calendar,
   Plus,
-  CreditCard
+  CreditCard,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +22,8 @@ import PurchasesList from './PurchasesList';
 import PaymentsMadeList from './PaymentsMadeList';
 import CreatePurchaseModal from './CreatePurchaseModal';
 import AddPaymentModal from './AddPaymentModal';
+import UpdateVendorModal from './UpdateVendorModal';
+import DeleteVendorModal from './DeleteVendorModal';
 
 interface VendorDetailPanelProps {
   vendor: Vendor;
@@ -30,6 +34,8 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreatePurchase, setShowCreatePurchase] = useState(false);
   const [showAddPayment, setShowAddPayment] = useState(false);
+  const [showUpdateVendor, setShowUpdateVendor] = useState(false);
+  const [showDeleteVendor, setShowDeleteVendor] = useState(false);
   
   const { data: purchases = [] } = useVendorPurchases(vendor.id);
   const { data: payments = [] } = useVendorPayments(vendor.id);
@@ -88,6 +94,10 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
     }
   ];
 
+  const handleVendorDeleted = () => {
+    onBack();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Fixed Header */}
@@ -120,6 +130,22 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
             <Button 
               variant="outline" 
               size="sm"
+              onClick={() => setShowUpdateVendor(true)}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowDeleteVendor(true)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
               onClick={() => setShowCreatePurchase(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -142,7 +168,7 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
         {/* KPI Metrics Cards */}
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Vendor Overview</h2>
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {metrics.map((metric, index) => (
               <MetricCard
                 key={index}
@@ -217,6 +243,19 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
         isOpen={showAddPayment}
         onClose={() => setShowAddPayment(false)}
         vendor={vendor}
+      />
+
+      <UpdateVendorModal
+        isOpen={showUpdateVendor}
+        onClose={() => setShowUpdateVendor(false)}
+        vendor={vendor}
+      />
+
+      <DeleteVendorModal
+        isOpen={showDeleteVendor}
+        onClose={() => setShowDeleteVendor(false)}
+        vendor={vendor}
+        onDeleted={handleVendorDeleted}
       />
     </div>
   );

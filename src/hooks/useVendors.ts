@@ -73,7 +73,7 @@ export const useCreateVendor = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (vendorData: Omit<Vendor, 'id' | 'created_at'>) => {
+    mutationFn: async (vendorData: Omit<Vendor, 'id' | 'created_at' | 'totalPurchases' | 'totalPaid' | 'pending'>) => {
       console.log('Creating vendor:', vendorData);
       
       const { data, error } = await supabase
@@ -96,6 +96,70 @@ export const useCreateVendor = () => {
     onError: (error) => {
       console.error('Error creating vendor:', error);
       toast.error('Failed to create vendor');
+    },
+  });
+};
+
+export const useUpdateVendor = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Vendor> }) => {
+      console.log('Updating vendor:', id, updates);
+      
+      const { data, error } = await supabase
+        .from('vendors')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating vendor:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      toast.success('Vendor updated successfully');
+    },
+    onError: (error) => {
+      console.error('Error updating vendor:', error);
+      toast.error('Failed to update vendor');
+    },
+  });
+};
+
+export const useDeleteVendor = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      console.log('Deleting vendor:', id);
+      
+      const { error } = await supabase
+        .from('vendors')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting vendor:', error);
+        throw error;
+      }
+
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['purchases'] });
+      queryClient.invalidateQueries({ queryKey: ['payments-made'] });
+      toast.success('Vendor deleted successfully');
+    },
+    onError: (error) => {
+      console.error('Error deleting vendor:', error);
+      toast.error('Failed to delete vendor');
     },
   });
 };

@@ -15,10 +15,12 @@ import { usePurchases } from '@/hooks/usePurchases';
 import { usePaymentsMade } from '@/hooks/usePaymentsMade';
 import VendorList from './VendorList';
 import VendorDetailPanel from './VendorDetailPanel';
+import AddVendorModal from './AddVendorModal';
 
 const PurchasesManagement: React.FC = () => {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddVendor, setShowAddVendor] = useState(false);
 
   const { data: vendors = [], refetch: refetchVendors } = useVendors();
   const { data: purchases = [], refetch: refetchPurchases } = usePurchases();
@@ -53,6 +55,14 @@ const PurchasesManagement: React.FC = () => {
     setSelectedVendorId(vendorId);
   };
 
+  const handleAddVendorClick = () => {
+    setShowAddVendor(true);
+  };
+
+  const handleCloseAddVendor = () => {
+    setShowAddVendor(false);
+  };
+
   if (selectedVendor) {
     return (
       <VendorDetailPanel
@@ -74,7 +84,11 @@ const PurchasesManagement: React.FC = () => {
             <h1 className="text-xl font-bold text-foreground">Purchases</h1>
           </div>
           
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleAddVendorClick}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Vendor
           </Button>
@@ -90,7 +104,11 @@ const PurchasesManagement: React.FC = () => {
             <p className="text-muted-foreground text-sm mb-3">
               Add your first vendor and start tracking purchases and payments.
             </p>
-            <Button size="sm" className="bg-primary hover:bg-primary/90">
+            <Button 
+              size="sm" 
+              className="bg-primary hover:bg-primary/90"
+              onClick={handleAddVendorClick}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add First Vendor
             </Button>
@@ -117,6 +135,12 @@ const PurchasesManagement: React.FC = () => {
           isEmpty={!hasData}
         />
       </main>
+
+      {/* Add Vendor Modal */}
+      <AddVendorModal
+        isOpen={showAddVendor}
+        onClose={handleCloseAddVendor}
+      />
     </div>
   );
 };
