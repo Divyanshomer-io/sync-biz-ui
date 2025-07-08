@@ -146,7 +146,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
           <Card className="glass-card">
             <CardContent className="p-3 sm:p-4 text-center">
               <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
-                ₹{totalSales.toLocaleString()}
+                ₹{totalSales.toLocaleString('en-IN')}
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1">
                 <DollarSign className="w-3 h-3" />
@@ -158,7 +158,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
           <Card className="glass-card">
             <CardContent className="p-3 sm:p-4 text-center">
               <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
-                ₹{totalPaid.toLocaleString()}
+                ₹{totalPaid.toLocaleString('en-IN')}
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1">
                 <TrendingUp className="w-3 h-3" />
@@ -170,7 +170,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
           <Card className="glass-card">
             <CardContent className="p-3 sm:p-4 text-center">
               <div className={`text-xl sm:text-2xl font-bold ${outstanding > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>
-                ₹{outstanding.toLocaleString()}
+                ₹{outstanding.toLocaleString('en-IN')}
               </div>
               <div className={`text-xs sm:text-sm flex items-center justify-center gap-1 ${outstanding > 0 ? 'text-red-600/80 dark:text-red-400/80' : 'text-muted-foreground/80'}`}>
                 <Package className="w-3 h-3" />
@@ -182,7 +182,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
           <Card className="glass-card">
             <CardContent className="p-3 sm:p-4 text-center">
               <div className="text-xl sm:text-2xl font-bold text-primary">
-                ₹{thisMonthSales.toLocaleString()}
+                ₹{thisMonthSales.toLocaleString('en-IN')}
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1">
                 <Calendar className="w-3 h-3" />
