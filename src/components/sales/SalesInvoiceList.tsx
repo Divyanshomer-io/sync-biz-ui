@@ -17,7 +17,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import InvoicePreviewModal from './InvoicePreviewModal';
-import { useAuth } from '@/hooks/useAuth';
 
 interface Invoice {
   id: string;
@@ -43,7 +42,7 @@ interface SalesInvoiceListProps {
   showHeader?: boolean;
   title?: string;
 }
-const { profile } = useAuth();
+
 const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({ 
   customerId, 
   invoices = [],
@@ -73,15 +72,6 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   doc.setFontSize(22);
   doc.setTextColor(50, 50, 50); // Darker grey for main title
   doc.text("INVOICE", doc.internal.pageSize.width / 2, 20, { align: "center" });
-  if (profile) {
-  doc.setFontSize(11);
-  doc.setTextColor(60, 60, 60); // dark gray
-  doc.text(profile.organization_name || 'Your Business', doc.internal.pageSize.width / 2, 28, { align: "center" });
-
-  doc.setFontSize(10);
-  doc.text(`Contact: ${profile.contact_number || 'N/A'}`, doc.internal.pageSize.width / 2, 34, { align: "center" });
-  doc.text(`GSTIN: ${profile.gst_number || 'N/A'}`, doc.internal.pageSize.width / 2, 40, { align: "center" });
-}
 
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100); // Lighter grey for company info (optional)
