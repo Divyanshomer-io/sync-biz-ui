@@ -13,6 +13,7 @@ export const useVendorPurchases = (vendorId: string) => {
         .from('purchases')
         .select('*')
         .eq('vendor_id', vendorId)
+         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
