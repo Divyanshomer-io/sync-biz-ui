@@ -1,4 +1,5 @@
-
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import React, { useState } from 'react';
 import { 
   Calendar, 
@@ -64,40 +65,172 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
     linkElement.click();
   };
 
-  const downloadInvoiceAsPDF = async (invoice: Invoice) => {
-    // Create invoice content as text (simplified PDF alternative)
-    const content = `
-INVOICE: ${invoice.id}
-Date: ${new Date(invoice.date).toLocaleDateString('en-IN')}
-Customer: ${invoice.customerName || 'N/A'}
+  const downloadInvoiceAsPDF = (invoice: Invoice) => {
+  const doc = new jsPDF();
 
-Items:
-${invoice.items.map(item => `• ${item.name}: ${item.quantity} ${item.unit || ''} @ ₹${item.rate} = ₹${item.amount}`).join('\n')}
+  // --- Header ---
+  doc.setFontSize(22);
+  doc.setTextColor(50, 50, 50); // Darker grey for main title
+  doc.text("INVOICE", doc.internal.pageSize.width / 2, 20, { align: "center" });
 
-Subtotal: ₹${invoice.subtotal || 0}
-GST Amount: ₹${invoice.gst_amount || 0}
-Transport Charges: ₹${invoice.transport_charges || 0}
-Total Amount: ₹${invoice.grandTotal}
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100); // Lighter grey for company info (optional)
+  // You can add your company's name, address, and contact here
+  // doc.text("Your Company Name", doc.internal.pageSize.width / 2, 28, { align: "center" });
+  // doc.text("Your Company Address, City, Pincode", doc.internal.pageSize.width / 2, 34, { align: "center" });
+  // doc.text("Phone: XXX-XXX-XXXX | Email: info@yourcompany.com", doc.internal.pageSize.width / 2, 40, { align: "center" });
 
-Payment Status: ${invoice.status.toUpperCase()}
-${invoice.paidAmount ? `Paid Amount: ₹${invoice.paidAmount}` : ''}
+  // Add a line separator
+  doc.setDrawColor(200, 200, 200); // Light grey line
+  doc.line(10, 45, doc.internal.pageSize.width - 10, 45); // x1, y1, x2, y2
 
-Transport Details:
-Company: ${invoice.transport_company || 'N/A'}
-Truck Number: ${invoice.truck_number || 'N/A'}
-Driver Contact: ${invoice.driver_contact || 'N/A'}
+  // --- Invoice and Customer Details ---
+  let y = 55;
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0); // Black for main text
 
-Notes: ${invoice.delivery_notes || 'N/A'}
-    `;
+  doc.text("Invoice #:", 10, y);
+  doc.setFont(undefined, 'bold');
+  doc.text(`${invoice.id}`, 40, y);
+  doc.setFont(undefined, 'normal');
 
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `invoice-${invoice.id}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  doc.text("Date:", doc.internal.pageSize.width / 2, y);
+  doc.setFont(undefined, 'bold');
+  doc.text(`${new Date(invoice.date).toLocaleDateString('en-IN')}`, doc.internal.pageSize.width / 2 + 20, y);
+  doc.setFont(undefined, 'normal');
+  y += 7;
+
+  doc.text("Bill To:", 10, y);
+  doc.setFont(undefined, 'bold');
+  doc.text(`${invoice.customerName || 'N/A'}`, 40, y);
+  doc.setFont(undefined, 'normal');
+  // You might want to add customer address here if available in invoice object
+  // doc.text(`Customer Address Line 1`, 40, y + 5);
+  // doc.text(`Customer Address Line 2`, 40, y + 10);
+  y += 15; // Adjust y after customer details
+
+  // --- Items Table ---
+  // Define table headers
+  const tableColumn = ["Item", "Quantity", "Unit", "Rate (₹)", "Amount (₹)"];
+  // Define table rows
+  const tableRows: any = [];
+
+  invoice.items.forEach(item => {
+    tableRows.push([
+      item.name,
+      item.quantity,
+      item.unit || '',
+      item.rate.toFixed(2),
+      item.amount.toFixed(2)
+    ]);
+  });
+
+  (doc as any).autoTable({
+    startY: y,
+    head: [tableColumn],
+    body: tableRows,
+    theme: 'grid', // 'striped', 'grid', 'plain'
+    headStyles: {
+      fillColor: [230, 230, 230], // Light grey header
+      textColor: [0, 0, 0],
+      fontStyle: 'bold',
+      halign: 'center'
+    },
+    styles: {
+      fontSize: 9,
+      cellPadding: 2,
+      halign: 'left'
+    },
+    columnStyles: {
+      0: { halign: 'left' },
+      1: { halign: 'center' },
+      2: { halign: 'center' },
+      3: { halign: 'right' },
+      4: { halign: 'right' }
+    },
+    didDrawPage: function (data: any) {
+      y = data.cursor.y; // Update y position after table
+    }
+  });
+
+  y += 10; // Add some space after the table
+
+  // --- Totals and Payment Status ---
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(undefined, 'normal'); // Ensure font is normal for this section
+
+  const totalLabelX = doc.internal.pageSize.width - 60; // Align labels to the right
+  const totalValueX = doc.internal.pageSize.width - 15; // Align values further right
+
+  doc.text(`Subtotal:`, totalLabelX, y, { align: 'right' });
+  doc.text(`₹${(invoice.subtotal || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
+  y += 6;
+
+  doc.text(`GST Amount:`, totalLabelX, y, { align: 'right' });
+  doc.text(`₹${(invoice.gst_amount || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
+  y += 6;
+
+  doc.text(`Transport Charges:`, totalLabelX, y, { align: 'right' });
+  doc.text(`₹${(invoice.transport_charges || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
+  y += 8; // Extra space before total
+
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text(`Total Amount:`, totalLabelX, y, { align: 'right' });
+  doc.text(`₹${invoice.grandTotal.toFixed(2)}`, totalValueX, y, { align: 'right' });
+  doc.setFont(undefined, 'normal');
+  y += 10;
+
+  doc.setFontSize(10);
+  doc.text(`Payment Status:`, 10, y);
+  doc.setFont(undefined, 'bold');
+  doc.text(`${invoice.status.toUpperCase()}`, 50, y);
+  doc.setFont(undefined, 'normal');
+  y += 6;
+
+  if (invoice.paidAmount) {
+    doc.text(`Paid Amount:`, 10, y);
+    doc.setFont(undefined, 'bold');
+    doc.text(`₹${invoice.paidAmount.toFixed(2)}`, 50, y);
+    doc.setFont(undefined, 'normal');
+    y += 6;
+  }
+
+  // --- Transport Details ---
+  y += 10;
+  doc.setFontSize(11);
+  doc.setFont(undefined, 'bold');
+  doc.text("Transport Details:", 10, y);
+  doc.setFont(undefined, 'normal');
+  y += 6;
+
+  doc.setFontSize(10);
+  doc.text(`Company: ${invoice.transport_company || 'N/A'}`, 10, y); y += 6;
+  doc.text(`Truck Number: ${invoice.truck_number || 'N/A'}`, 10, y); y += 6;
+  doc.text(`Driver Contact: ${invoice.driver_contact || 'N/A'}`, 10, y); y += 6;
+
+  // --- Notes ---
+  y += 10;
+  doc.setFontSize(11);
+  doc.setFont(undefined, 'bold');
+  doc.text("Notes:", 10, y);
+  doc.setFont(undefined, 'normal');
+  y += 6;
+  doc.setFontSize(10);
+  // Max width for notes to wrap text
+  const splitNotes = doc.splitTextToSize(invoice.delivery_notes || 'N/A', doc.internal.pageSize.width - 20);
+  doc.text(splitNotes, 10, y);
+
+
+  // --- Footer (optional: add company details or thank you message) ---
+  // You might want to add a footer here, e.g., "Thank you for your business!"
+  // doc.setFontSize(10);
+  // doc.setTextColor(150, 150, 150);
+  // doc.text("Thank you for your business!", doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: "center" });
+
+  doc.save(`invoice-${invoice.id}.pdf`);
+};
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -217,9 +350,9 @@ Notes: ${invoice.delivery_notes || 'N/A'}
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+{/*                       <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         {getStatusIcon(invoice.status)}
-                      </div>
+                      </div> */}
                       <div className="min-w-0 flex-1">
                         <div className="font-medium text-foreground truncate">{invoice.id}</div>
                         <div className="text-sm text-muted-foreground">
