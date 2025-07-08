@@ -234,7 +234,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
     { id: 'sales', label: 'Sales', icon: ShoppingCart },
     { id: 'purchases', label: 'Purchases', icon: Package },
     { id: 'reports', label: 'Reports', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    // { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
   const timeFilterOptions = [
@@ -261,7 +261,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
           </div>
           
           <div className="flex items-center gap-2">
-            <Button
+{/*             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowAlerts(!showAlerts)}
@@ -271,7 +271,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
               {!hasData && (
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-muted rounded-full"></span>
               )}
-            </Button>
+            </Button> */}
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -482,19 +482,19 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
       </nav>
 
       {/* Floating Action Button */}
-      <QuickActions 
+{/*       <QuickActions 
         isOpen={showQuickActions}
         onToggle={() => setShowQuickActions(!showQuickActions)}
         isEmpty={!hasData}
-      />
+      /> */}
 
       {/* Alerts Panel */}
-      <AlertsPanel 
+{/*       <AlertsPanel 
         isOpen={showAlerts}
         onClose={() => setShowAlerts(false)}
         isEmpty={!hasData}
       />
-    </div>
+    </div> */}
   );
 };
 
