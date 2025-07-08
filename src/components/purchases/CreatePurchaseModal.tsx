@@ -70,10 +70,10 @@ const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({
   const onSubmit = async (data: CreatePurchaseForm) => {
     setIsSubmitting(true);
     try {
-          const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    //       const {
+    //   data: { user },
+    //   error: userError,
+    // } = await supabase.auth.getUser();
  if (userError || !user) throw new Error("User not authenticated");
       // Create the purchase
       await createPurchase.mutateAsync({
