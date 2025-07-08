@@ -125,7 +125,7 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
     ]);
   });
 
-  (doc as any).autoTable({
+  autoTable(doc,{
     startY: y,
     head: [tableColumn],
     body: tableRows,
