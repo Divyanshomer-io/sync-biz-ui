@@ -68,43 +68,48 @@ const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({
   });
 
   const onSubmit = async (data: CreatePurchaseForm) => {
-    setIsSubmitting(true);
-    try {
- const { data: userData, error } = await supabase.auth.getUser();
-    const user = userData?.user;
+  setIsSubmitting(true);
 
-    if (error || !user) throw new Error("User not authenticated");
-      // Create the purchase
-      await createPurchase.mutateAsync({
+  try {
+    const result = await supabase.auth.getUser();
+    const user = result?.data?.user;
+    const userError = result?.error;
+
+    if (userError || !user) {
+      throw new Error("User not authenticated");
+    }
+
+    // Create the purchase
+    await createPurchase.mutateAsync({
+      user_id: user.id,
+      vendor_id: vendor.id,
+      item: data.item,
+      quantity: data.quantity,
+      rate: data.rate,
+      status: data.status,
+      date: data.date,
+    });
+
+    // If status is "Paid", automatically create payment
+    if (data.status === 'Paid') {
+      const totalAmount = data.quantity * data.rate;
+      await createPayment.mutateAsync({
         user_id: user.id,
         vendor_id: vendor.id,
-        item: data.item,
-        quantity: data.quantity,
-        rate: data.rate,
-        status: data.status,
+        amount: totalAmount,
+        mode: 'Auto-Paid',
         date: data.date,
       });
-
-      // If status is "Paid", automatically create payment
-      if (data.status === 'Paid') {
-        const totalAmount = data.quantity * data.rate;
-        await createPayment.mutateAsync({
-           user_id: user.id,
-          vendor_id: vendor.id,
-          amount: totalAmount,
-          mode: 'Auto-Paid',
-          date: data.date,
-        });
-      }
-
-      form.reset();
-      onClose();
-    } catch (error) {
-      console.error('Error creating purchase:', error);
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+
+    form.reset();
+    onClose();
+  } catch (error) {
+    console.error('Error creating purchase:', error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
