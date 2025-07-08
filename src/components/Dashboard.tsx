@@ -493,8 +493,8 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
         isOpen={showAlerts}
         onClose={() => setShowAlerts(false)}
         isEmpty={!hasData}
-      />
-    </div> */}
+      /> */}
+    </div>
   );
 };
 
