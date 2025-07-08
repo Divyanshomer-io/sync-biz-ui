@@ -1,4 +1,4 @@
-
+import { useAuth } from '@/hooks/useAuth'; // ✅ Add this if not already
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -66,7 +66,7 @@ const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({
       date: new Date().toISOString().split('T')[0],
     },
   });
-
+const { user } = useAuth(); // ✅ Get the logged-in user
 const onSubmit = async (data: CreatePurchaseForm) => {
   setIsSubmitting(true);
   try {
