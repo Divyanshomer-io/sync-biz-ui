@@ -69,10 +69,25 @@ export const useCreatePaymentMade = () => {
   return useMutation({
     mutationFn: async (paymentData: Omit<PaymentMade, 'id' | 'created_at'>) => {
       console.log('Creating payment made:', paymentData);
-      
+
+      // ✅ Fetch logged-in user
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        console.error('Auth error:', authError);
+        throw new Error('User not authenticated');
+      }
+
+      // ✅ Include user_id in insert payload
       const { data, error } = await supabase
         .from('payments_made')
-        .insert(paymentData)
+        .insert({
+          ...paymentData,
+          user_id: user.id,
+        })
         .select()
         .single();
 
@@ -83,11 +98,13 @@ export const useCreatePaymentMade = () => {
 
       return data;
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments-made'] });
       queryClient.invalidateQueries({ queryKey: ['vendors'] });
       toast.success('Payment recorded successfully');
     },
+
     onError: (error) => {
       console.error('Error creating payment made:', error);
       toast.error('Failed to record payment');
