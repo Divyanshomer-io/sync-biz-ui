@@ -66,20 +66,11 @@ const CustomerValidationModal: React.FC<CustomerValidationModalProps> = ({
     setShowCreateModal(true);
   };
 
-  const handleCustomerCreated = async (newCustomerData: {
-    name: string;
-    email?: string;
-    phone?: string;
-    address?: string;
-    gstin?: string;
-    unitPreference?: string;
-    notes?: string;
-  }): Promise<Customer> => {
-    const createdCustomer = await onCustomerCreated(newCustomerData);
-    onCustomerValidated(createdCustomer);
+  const handleCustomerCreated = async () => {
+    // The CreateCustomerModal will handle the customer creation internally
+    // We'll close the modal and let the parent component handle the refresh
     setShowCreateModal(false);
     handleClose();
-    return createdCustomer;
   };
 
   const handleClose = () => {

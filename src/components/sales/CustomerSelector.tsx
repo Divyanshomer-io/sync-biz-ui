@@ -47,18 +47,10 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({
 
   const hasCustomers = customers.length > 0;
 
-  const handleCustomerCreated = async (newCustomerData: {
-    name: string;
-    email?: string;
-    phone?: string;
-    address?: string;
-    gstin?: string;
-    unitPreference?: string;
-    notes?: string;
-  }): Promise<Customer> => {
-    const createdCustomer = await onCustomerCreated(newCustomerData);
-    onCustomerSelect(createdCustomer);
-    return createdCustomer;
+  const handleCustomerCreated = async () => {
+    // The CreateCustomerModal will handle the customer creation internally
+    // and we'll refresh the customer list through the parent component
+    setShowCreateModal(false);
   };
 
   const toggleCustomerExpansion = (customerId: string) => {
