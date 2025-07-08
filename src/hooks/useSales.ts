@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface SaleItem {
   id: number;
@@ -49,13 +50,17 @@ export const useSales = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchSales = async () => {
+    if (!user) return;
+    
     try {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('sales')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -73,6 +78,8 @@ export const useSales = () => {
   };
 
   const createSale = async (saleData: CreateSaleData) => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
       // For now, we'll create individual sales records for each item
       // In a real-world scenario, you might want to create a separate invoices table
@@ -93,7 +100,8 @@ export const useSales = () => {
             driver_contact: saleData.transportDetails.driverContact || null,
             transport_charges: saleData.transportCharges / saleData.items.length, // Distribute transport charges
             total_amount: item.amount + (item.amount * saleData.gstRate) / 100 + (saleData.transportCharges / saleData.items.length),
-            delivery_notes: saleData.notes || null
+            delivery_notes: saleData.notes || null,
+            user_id: user.id
           }])
           .select()
           .single();
@@ -121,24 +129,26 @@ export const useSales = () => {
   };
 
   useEffect(() => {
-    fetchSales();
+    if (user) {
+      fetchSales();
 
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel('sales-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'sales'
-      }, () => {
-        fetchSales();
-      })
-      .subscribe();
+      // Set up real-time subscription
+      const subscription = supabase
+        .channel('sales-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'sales'
+        }, () => {
+          fetchSales();
+        })
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, []);
+      return () => {
+        supabase.removeChannel(subscription);
+      };
+    }
+  }, [user]);
 
   return {
     sales,

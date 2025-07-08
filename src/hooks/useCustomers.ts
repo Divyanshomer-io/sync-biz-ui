@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Customer {
   id: string;
@@ -26,13 +27,17 @@ export const useCustomers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchCustomers = async () => {
+    if (!user) return;
+    
     try {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('customers')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -44,7 +49,8 @@ export const useCustomers = () => {
           const { data: salesData } = await supabase
             .from('sales')
             .select('total_amount')
-            .eq('customer_id', customer.id);
+            .eq('customer_id', customer.id)
+            .eq('user_id', user.id);
 
           const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.total_amount), 0) || 0;
 
@@ -52,7 +58,8 @@ export const useCustomers = () => {
           const { data: paymentsData } = await supabase
             .from('payments')
             .select('amount_paid')
-            .eq('customer_id', customer.id);
+            .eq('customer_id', customer.id)
+            .eq('user_id', user.id);
 
           const totalPaid = paymentsData?.reduce((sum, payment) => sum + Number(payment.amount_paid), 0) || 0;
 
@@ -94,6 +101,8 @@ export const useCustomers = () => {
     unitPreference?: string;
     notes?: string;
   }) => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
       const { data, error } = await supabase
         .from('customers')
@@ -104,7 +113,8 @@ export const useCustomers = () => {
           address: customerData.address || null,
           gst_number: customerData.gstin || null,
           preferred_unit: customerData.unitPreference || 'kg',
-          notes: customerData.notes || null
+          notes: customerData.notes || null,
+          user_id: user.id
         }])
         .select()
         .single();
@@ -145,6 +155,8 @@ export const useCustomers = () => {
     address?: string;
     gst_number?: string;
   }) => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
       const { data, error } = await supabase
         .from('customers')
@@ -156,6 +168,7 @@ export const useCustomers = () => {
           gst_number: customerData.gst_number || null,
         })
         .eq('id', customerId)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -193,11 +206,14 @@ export const useCustomers = () => {
   };
 
   const deleteCustomer = async (customerId: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
       const { error } = await supabase
         .from('customers')
         .delete()
-        .eq('id', customerId);
+        .eq('id', customerId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
@@ -220,24 +236,26 @@ export const useCustomers = () => {
   };
 
   useEffect(() => {
-    fetchCustomers();
+    if (user) {
+      fetchCustomers();
 
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel('customers-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'customers'
-      }, () => {
-        fetchCustomers();
-      })
-      .subscribe();
+      // Set up real-time subscription
+      const subscription = supabase
+        .channel('customers-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'customers'
+        }, () => {
+          fetchCustomers();
+        })
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, []);
+      return () => {
+        supabase.removeChannel(subscription);
+      };
+    }
+  }, [user]);
 
   return {
     customers,

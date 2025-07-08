@@ -13,8 +13,11 @@ import {
   Users,
   AlertCircle,
   Plus,
-  Calendar
+  Calendar,
+  ChevronDown
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import MetricCard from './MetricCard';
@@ -40,6 +43,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('1month');
+  const { profile, signOut } = useAuth();
   
   // Get real data from hooks with real-time updates
   const { customers, refetch: refetchCustomers } = useCustomers();
@@ -248,7 +252,12 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <Home className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-bold text-foreground">BizTrack</h1>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">BizTrack Pro</h1>
+              {profile && (
+                <p className="text-xs text-muted-foreground">{profile.organization_name}</p>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
@@ -264,9 +273,34 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
               )}
             </Button>
             
-            <Button variant="ghost" size="sm">
-              <User className="w-5 h-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-primary" />
+                  </div>
+                  {profile && (
+                    <div className="hidden sm:block text-left">
+                      <p className="text-sm font-medium">{profile.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{profile.business_type}</p>
+                    </div>
+                  )}
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => onSectionChange('profile')}>
+                  <User className="w-4 h-4 mr-2" />
+                  Profile Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={signOut} className="text-destructive">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>

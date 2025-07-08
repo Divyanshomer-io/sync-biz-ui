@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Payment {
   id: string;
@@ -25,13 +26,17 @@ export const usePayments = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchPayments = async () => {
+    if (!user) return;
+    
     try {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('payments')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -49,6 +54,8 @@ export const usePayments = () => {
   };
 
   const createPayment = async (paymentData: CreatePaymentData) => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
       const { data, error } = await supabase
         .from('payments')
@@ -57,7 +64,8 @@ export const usePayments = () => {
           amount_paid: paymentData.amount,
           payment_mode: paymentData.paymentMode,
           payment_date: paymentData.date,
-          notes: paymentData.notes || null
+          notes: paymentData.notes || null,
+          user_id: user.id
         }])
         .select()
         .single();
@@ -82,24 +90,26 @@ export const usePayments = () => {
   };
 
   useEffect(() => {
-    fetchPayments();
+    if (user) {
+      fetchPayments();
 
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel('payments-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'payments'
-      }, () => {
-        fetchPayments();
-      })
-      .subscribe();
+      // Set up real-time subscription
+      const subscription = supabase
+        .channel('payments-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'payments'
+        }, () => {
+          fetchPayments();
+        })
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(subscription);
+      return () => {
+        supabase.removeChannel(subscription);
     };
-  }, []);
+    }
+  }, [user]);
 
   return {
     payments,

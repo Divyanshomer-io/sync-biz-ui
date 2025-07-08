@@ -25,6 +25,7 @@ export type Database = {
           name: string
           notes: string | null
           preferred_unit: string | null
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -36,6 +37,7 @@ export type Database = {
           name: string
           notes?: string | null
           preferred_unit?: string | null
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -47,6 +49,7 @@ export type Database = {
           name?: string
           notes?: string | null
           preferred_unit?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -74,6 +77,7 @@ export type Database = {
           notes: string | null
           payment_date: string
           payment_mode: string | null
+          user_id: string | null
         }
         Insert: {
           amount_paid: number
@@ -83,6 +87,7 @@ export type Database = {
           notes?: string | null
           payment_date?: string
           payment_mode?: string | null
+          user_id?: string | null
         }
         Update: {
           amount_paid?: number
@@ -92,6 +97,7 @@ export type Database = {
           notes?: string | null
           payment_date?: string
           payment_mode?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -110,6 +116,7 @@ export type Database = {
           date: string | null
           id: string
           mode: string | null
+          user_id: string | null
           vendor_id: string | null
         }
         Insert: {
@@ -118,6 +125,7 @@ export type Database = {
           date?: string | null
           id?: string
           mode?: string | null
+          user_id?: string | null
           vendor_id?: string | null
         }
         Update: {
@@ -126,6 +134,7 @@ export type Database = {
           date?: string | null
           id?: string
           mode?: string | null
+          user_id?: string | null
           vendor_id?: string | null
         }
         Relationships: [
@@ -148,6 +157,7 @@ export type Database = {
           rate: number
           status: string | null
           total_amount: number | null
+          user_id: string | null
           vendor_id: string | null
         }
         Insert: {
@@ -159,6 +169,7 @@ export type Database = {
           rate: number
           status?: string | null
           total_amount?: number | null
+          user_id?: string | null
           vendor_id?: string | null
         }
         Update: {
@@ -170,6 +181,7 @@ export type Database = {
           rate?: number
           status?: string | null
           total_amount?: number | null
+          user_id?: string | null
           vendor_id?: string | null
         }
         Relationships: [
@@ -201,6 +213,7 @@ export type Database = {
           transport_company: string | null
           truck_number: string | null
           unit: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -220,6 +233,7 @@ export type Database = {
           transport_company?: string | null
           truck_number?: string | null
           unit: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -239,6 +253,7 @@ export type Database = {
           transport_company?: string | null
           truck_number?: string | null
           unit?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -250,6 +265,36 @@ export type Database = {
           },
         ]
       }
+      user_profiles: {
+        Row: {
+          business_type: string | null
+          created_at: string | null
+          full_name: string
+          gst_number: string | null
+          id: string
+          organization_name: string
+          phone: string | null
+        }
+        Insert: {
+          business_type?: string | null
+          created_at?: string | null
+          full_name: string
+          gst_number?: string | null
+          id: string
+          organization_name: string
+          phone?: string | null
+        }
+        Update: {
+          business_type?: string | null
+          created_at?: string | null
+          full_name?: string
+          gst_number?: string | null
+          id?: string
+          organization_name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
       vendors: {
         Row: {
           address: string | null
@@ -259,6 +304,7 @@ export type Database = {
           gstin: string | null
           id: string
           name: string
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -268,6 +314,7 @@ export type Database = {
           gstin?: string | null
           id?: string
           name: string
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -277,6 +324,7 @@ export type Database = {
           gstin?: string | null
           id?: string
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }

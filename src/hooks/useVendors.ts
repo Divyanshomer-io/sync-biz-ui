@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Vendor {
   id: string;
@@ -17,15 +18,20 @@ export interface Vendor {
 }
 
 export const useVendors = () => {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['vendors'],
+    queryKey: ['vendors', user?.id],
     queryFn: async () => {
+      if (!user) return [];
+      
       console.log('Fetching vendors...');
       
       // Fetch vendors with aggregated data
       const { data: vendors, error: vendorsError } = await supabase
         .from('vendors')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (vendorsError) {
@@ -40,13 +46,15 @@ export const useVendors = () => {
           const { data: purchases } = await supabase
             .from('purchases')
             .select('total_amount')
-            .eq('vendor_id', vendor.id);
+            .eq('vendor_id', vendor.id)
+            .eq('user_id', user.id);
 
           // Get total payments made
           const { data: payments } = await supabase
             .from('payments_made')
             .select('amount')
-            .eq('vendor_id', vendor.id);
+            .eq('vendor_id', vendor.id)
+            .eq('user_id', user.id);
 
           const totalPurchases = purchases?.reduce((sum, purchase) => 
             sum + Number(purchase.total_amount || 0), 0) || 0;
@@ -66,19 +74,23 @@ export const useVendors = () => {
       console.log('Vendors with totals:', vendorsWithTotals);
       return vendorsWithTotals;
     },
+    enabled: !!user,
   });
 };
 
 export const useCreateVendor = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (vendorData: Omit<Vendor, 'id' | 'created_at' | 'totalPurchases' | 'totalPaid' | 'pending'>) => {
+      if (!user) throw new Error('User not authenticated');
+      
       console.log('Creating vendor:', vendorData);
       
       const { data, error } = await supabase
         .from('vendors')
-        .insert(vendorData)
+        .insert({ ...vendorData, user_id: user.id })
         .select()
         .single();
 
@@ -90,7 +102,7 @@ export const useCreateVendor = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['vendors', user?.id] });
       toast.success('Vendor created successfully');
     },
     onError: (error) => {
@@ -102,15 +114,19 @@ export const useCreateVendor = () => {
 
 export const useUpdateVendor = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Vendor> }) => {
+      if (!user) throw new Error('User not authenticated');
+      
       console.log('Updating vendor:', id, updates);
       
       const { data, error } = await supabase
         .from('vendors')
         .update(updates)
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -122,7 +138,7 @@ export const useUpdateVendor = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['vendors', user?.id] });
       toast.success('Vendor updated successfully');
     },
     onError: (error) => {
@@ -134,15 +150,19 @@ export const useUpdateVendor = () => {
 
 export const useDeleteVendor = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!user) throw new Error('User not authenticated');
+      
       console.log('Deleting vendor:', id);
       
       const { error } = await supabase
         .from('vendors')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error deleting vendor:', error);
@@ -152,7 +172,7 @@ export const useDeleteVendor = () => {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['vendors', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['purchases'] });
       queryClient.invalidateQueries({ queryKey: ['payments-made'] });
       toast.success('Vendor deleted successfully');

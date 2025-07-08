@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import Dashboard from '@/components/Dashboard';
 import SalesManagement from '@/components/sales/SalesManagement';
 import PurchasesManagement from '@/components/purchases/PurchasesManagement';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import UserProfile from '@/components/auth/UserProfile';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -46,6 +48,8 @@ const Index = () => {
             </div>
           </div>
         );
+      case 'profile':
+        return <UserProfile onBack={() => setActiveSection('dashboard')} />;
       case 'settings':
         return (
           <div className="min-h-screen bg-background pt-16 pb-20 px-4 flex items-center justify-center">
@@ -61,11 +65,12 @@ const Index = () => {
   };
 
   return (
-    <div className="relative">
-      {renderContent()}
-      
-      {/* Fixed Bottom Navigation - Show on all sections */}
-      {activeSection !== 'dashboard' && (
+    <ProtectedRoute>
+      <div className="relative">
+        {renderContent()}
+        
+        {/* Fixed Bottom Navigation - Show on all sections */}
+        {activeSection !== 'dashboard' && activeSection !== 'profile' && (
         <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border/50 z-50">
           <div className="flex items-center justify-around px-2 py-2">
             <button
@@ -116,8 +121,9 @@ const Index = () => {
             </button>
           </div>
         </nav>
-      )}
-    </div>
+        )}
+      </div>
+    </ProtectedRoute>
   );
 };
 
