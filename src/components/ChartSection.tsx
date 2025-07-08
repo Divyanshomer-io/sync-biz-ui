@@ -3,6 +3,7 @@ import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, X
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Users, PieChart as PieChartIcon } from 'lucide-react';
+import { format, subDays, subMonths, startOfMonth, addDays, addMonths } from 'date-fns';
 
 interface ChartSectionProps {
   isEmpty?: boolean;
@@ -14,7 +15,7 @@ interface ChartSectionProps {
 
 const ChartSection: React.FC<ChartSectionProps> = ({ 
   isEmpty = false, 
-  timeFilter = '1month',
+  timeFilter = '1month', // Default to 1month (now 30 days)
   sales = [],
   payments = [],
   customers = []
@@ -23,59 +24,120 @@ const ChartSection: React.FC<ChartSectionProps> = ({
 
   const generateRealData = (filter: string) => {
     const now = new Date();
-    let periods: string[] = [];
-    let startDate: Date;
+    let dataPoints: { period: string; sales: number; purchases: number }[] = [];
 
-    switch (filter) {
-      case '1week':
-        periods = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case '1year':
-        periods = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      default: // 1month
-        periods = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (filter === '1week') {
+      // Data for last 7 days (including today)
+      for (let i = 6; i >= 0; i--) { // Loop for the last 7 days
+        const date = subDays(now, i);
+        const period = format(date, 'MMM dd'); // e.g., 'Jul 01'
+        dataPoints.push({ period, sales: 0, purchases: 0 });
+      }
+    } else if (filter === '1year') {
+      // Data for last 12 months (including current month)
+      for (let i = 11; i >= 0; i--) { // Loop for the last 12 months
+        const monthStart = startOfMonth(subMonths(now, i));
+        const period = format(monthStart, 'MMM yyyy'); // e.g., 'Jul 2024'
+        dataPoints.push({ period, sales: 0, purchases: 0 });
+      }
+    } else { // '1month' (now 30 days)
+      // Data for last 30 days (including today)
+      for (let i = 29; i >= 0; i--) { // Loop for the last 30 days
+        const date = subDays(now, i);
+        const period = format(date, 'MMM dd'); // e.g., 'Jul 01'
+        dataPoints.push({ period, sales: 0, purchases: 0 });
+      }
     }
 
-    return periods.map((period, index) => {
+    // Convert sales and payments created_at to Date objects for easier comparison
+    const parsedSales = sales.map(sale => ({
+      ...sale,
+      created_at: new Date(sale.created_at)
+    }));
+    const parsedPayments = payments.map(payment => ({
+      ...payment,
+      created_at: new Date(payment.created_at)
+    }));
+
+    // Populate dataPoints with actual sales and purchases
+    dataPoints.forEach(dataPoint => {
       let periodStart: Date;
       let periodEnd: Date;
 
-      if (filter === '1week') {
-        periodStart = new Date(startDate.getTime() + index * 24 * 60 * 60 * 1000);
-        periodEnd = new Date(periodStart.getTime() + 24 * 60 * 60 * 1000);
-      } else if (filter === '1year') {
-        periodStart = new Date(now.getFullYear(), index, 1);
-        periodEnd = new Date(now.getFullYear(), index + 1, 0);
-      } else {
-        periodStart = new Date(startDate.getTime() + index * 7 * 24 * 60 * 60 * 1000);
-        periodEnd = new Date(periodStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+      if (filter === '1week' || filter === '1month') {
+        // For daily filters, the period string directly corresponds to the day
+        periodStart = new Date(now.getFullYear(), now.getMonth(), parseInt(dataPoint.period.substring(4)));
+        // Adjust year if month is different (e.g., Dec to Jan)
+        if (dataPoint.period.substring(0,3) !== format(now, 'MMM')) {
+            // This is a simplified approach. A more robust one would involve parsing the full date.
+            // For now, let's just use the date-fns functions to get the exact start and end of the period.
+            const dateFromPeriod = new Date(dataPoint.period + ' ' + now.getFullYear()); // Assuming current year for simplicity
+            if (dateFromPeriod > now) { // Handle cases where month wraps around to previous year
+                dateFromPeriod.setFullYear(now.getFullYear() - 1);
+            }
+            periodStart = dateFromPeriod;
+        } else {
+            periodStart = new Date(now.getFullYear(), now.getMonth(), parseInt(dataPoint.period.substring(4)));
+        }
+        // Correctly determine periodStart based on the formatted string
+        // This is a more robust way to get the exact date from the 'MMM dd' string
+        const yearForPeriod = now.getFullYear(); // Assume current year for daily periods
+        const monthIndex = new Date(Date.parse(dataPoint.period.substring(0, 3) + " 1, 2000")).getMonth();
+        const day = parseInt(dataPoint.period.substring(4));
+        periodStart = new Date(yearForPeriod, monthIndex, day);
+        periodEnd = addDays(periodStart, 1); // End of the day
+        
+        // Adjust periodStart to be the correct date in the past
+        // Find the actual date object for this period
+        let actualDate: Date | null = null;
+        if (filter === '1week') {
+            for (let i = 0; i < 7; i++) {
+                const d = subDays(now, i);
+                if (format(d, 'MMM dd') === dataPoint.period) {
+                    actualDate = d;
+                    break;
+                }
+            }
+        } else { // 1month (30 days)
+            for (let i = 0; i < 30; i++) {
+                const d = subDays(now, i);
+                if (format(d, 'MMM dd') === dataPoint.period) {
+                    actualDate = d;
+                    break;
+                }
+            }
+        }
+        if (actualDate) {
+            periodStart = actualDate;
+            periodEnd = addDays(actualDate, 1);
+        } else {
+            // Fallback for safety, though should not be hit with correct logic
+            periodStart = new Date(0); 
+            periodEnd = new Date(0);
+        }
+
+      } else { // '1year'
+        // For monthly filter, the period string is 'MMM yyyy'
+        const [monthStr, yearStr] = dataPoint.period.split(' ');
+        const monthIndex = new Date(Date.parse(monthStr + " 1, 2000")).getMonth(); // Get month index from string
+        const year = parseInt(yearStr);
+        periodStart = new Date(year, monthIndex, 1); // First day of the month
+        periodEnd = addMonths(periodStart, 1); // First day of the next month
       }
 
-      // Only include data up to current date
-      if (periodStart > now) {
-        return { period, sales: 0, purchases: 0 };
-      }
-
-      const periodSales = sales.filter(sale => {
-        const saleDate = new Date(sale.created_at);
-        return saleDate >= periodStart && saleDate < periodEnd;
+      const periodSales = parsedSales.filter(sale => {
+        return sale.created_at >= periodStart && sale.created_at < periodEnd;
       }).reduce((sum, sale) => sum + Number(sale.total_amount), 0);
 
-      const periodPayments = payments.filter(payment => {
-        const paymentDate = new Date(payment.created_at);
-        return paymentDate >= periodStart && paymentDate < periodEnd;
+      const periodPayments = parsedPayments.filter(payment => {
+        return payment.created_at >= periodStart && payment.created_at < periodEnd;
       }).reduce((sum, payment) => sum + Number(payment.amount_paid), 0);
 
-      return {
-        period,
-        sales: periodSales,
-        purchases: periodPayments
-      };
+      dataPoint.sales = periodSales;
+      dataPoint.purchases = periodPayments;
     });
+
+    return dataPoints;
   };
 
   const salesData = generateRealData(timeFilter);
