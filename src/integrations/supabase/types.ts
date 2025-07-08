@@ -50,6 +50,21 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_counters: {
+        Row: {
+          count: number
+          year_month: string
+        }
+        Insert: {
+          count?: number
+          year_month: string
+        }
+        Update: {
+          count?: number
+          year_month?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount_paid: number
@@ -270,7 +285,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_custom_invoice_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

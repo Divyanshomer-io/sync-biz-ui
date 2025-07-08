@@ -37,8 +37,8 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const { getSalesByCustomer } = useSales();
-  const { payments } = usePayments();
+  const { getSalesByCustomer, refetch: refetchSales } = useSales();
+  const { payments, refetch: refetchPayments } = usePayments();
 
   const customerSales = getSalesByCustomer(customer.id);
   const customerPayments = payments.filter(p => p.customer_id === customer.id);
@@ -78,7 +78,13 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
 
   const handlePaymentAdded = () => {
     setShowAddPayment(false);
-    // The payment modal will handle the refresh
+    refetchPayments();
+  };
+
+  const handleInvoiceCreated = () => {
+    setShowCreateSale(false);
+    refetchSales();
+    refetchPayments();
   };
 
   return (
@@ -246,7 +252,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
         isOpen={showCreateSale}
         onClose={() => setShowCreateSale(false)}
         customer={customer}
-        onInvoiceCreated={() => setShowCreateSale(false)}
+        onInvoiceCreated={handleInvoiceCreated}
       />
 
       <PaymentModal

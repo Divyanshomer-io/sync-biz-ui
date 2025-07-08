@@ -11,12 +11,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useSales } from '@/hooks/useSales';
 
 interface CreateSaleModalProps {
   isOpen: boolean;
   onClose: () => void;
   customer: any;
-  onInvoiceCreated?: (invoice: any) => void;
+  onInvoiceCreated?: () => void;
 }
 
 const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
@@ -26,7 +27,9 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
   onInvoiceCreated
 }) => {
   const { toast } = useToast();
+  const { createSale } = useSales();
   const [showPreview, setShowPreview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [items, setItems] = useState([
     { id: 1, name: '', quantity: 1, unit: 'kg', rate: 0, amount: 0 }
   ]);
@@ -109,7 +112,7 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
     return `INV/${year}/${month}/${random}`;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -119,35 +122,52 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
       return;
     }
 
-    const invoice = {
-      //id: generateInvoiceNumber(),
-      customerId: customer.id,
-      customerName: customer.name,
-      date: new Date().toISOString().split('T')[0],
-      items: items,
-      subtotal,
-      gstRate,
-      gstAmount,
-      transportCharges,
-      transportDetails,
-      grandTotal,
-      notes,
-      status: 'unpaid',
-      createdAt: new Date().toISOString()
-    };
-
-    console.log('Creating invoice:', invoice);
+    setIsSubmitting(true);
     
-    if (onInvoiceCreated) {
-      onInvoiceCreated(invoice);
+    try {
+      const saleData = {
+        customerId: customer.id,
+        items: items,
+        gstRate,
+        transportCharges,
+        transportDetails,
+        notes
+      };
+
+      console.log('Creating sale with data:', saleData);
+      
+      await createSale(saleData);
+
+      toast({
+        title: "Success",
+        description: "Invoice created successfully!"
+      });
+
+      // Reset form
+      setItems([{ id: 1, name: '', quantity: 1, unit: 'kg', rate: 0, amount: 0 }]);
+      setGstRate(18);
+      setTransportCharges(0);
+      setTransportDetails({ companyName: '', truckNumber: '', driverContact: '' });
+      setNotes('');
+      setErrors({});
+      setShowPreview(false);
+
+      // Call the callback to refresh data
+      if (onInvoiceCreated) {
+        onInvoiceCreated();
+      }
+
+      onClose();
+    } catch (error) {
+      console.error('Error creating sale:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create invoice. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-
-    toast({
-      title: "Success",
-      description: `Invoice ${invoice.id} created successfully!`
-    });
-
-    onClose();
   };
 
   if (showPreview) {
@@ -232,14 +252,16 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
                 variant="outline"
                 onClick={() => setShowPreview(false)}
                 className="flex-1"
+                disabled={isSubmitting}
               >
                 Back to Edit
               </Button>
               <Button
                 onClick={handleSubmit}
                 className="flex-1 bg-primary hover:bg-primary/90"
+                disabled={isSubmitting}
               >
-                Create Invoice
+                {isSubmitting ? 'Creating...' : 'Create Invoice'}
               </Button>
             </div>
           </div>
@@ -480,6 +502,7 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
               variant="outline"
               onClick={onClose}
               className="flex-1"
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
@@ -487,15 +510,17 @@ const CreateSaleModal: React.FC<CreateSaleModalProps> = ({
               onClick={() => setShowPreview(true)}
               variant="outline"
               className="flex-1"
+              disabled={isSubmitting}
             >
               Preview
             </Button>
             <Button
               onClick={handleSubmit}
               className="flex-1 bg-primary hover:bg-primary/90"
+              disabled={isSubmitting}
             >
               <Calculator className="w-4 h-4 mr-2" />
-              Create Invoice
+              {isSubmitting ? 'Creating...' : 'Create Invoice'}
             </Button>
           </div>
         </div>
