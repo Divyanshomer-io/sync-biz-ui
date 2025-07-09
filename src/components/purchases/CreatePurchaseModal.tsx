@@ -73,7 +73,6 @@ const onSubmit = async (data: CreatePurchaseForm) => {
     const totalAmount = data.quantity * data.rate;
 
     await createPurchase.mutateAsync({
-      user_id: user.id,   
       vendor_id: vendor.id,
       item: data.item,
       quantity: data.quantity,

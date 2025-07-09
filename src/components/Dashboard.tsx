@@ -433,6 +433,7 @@ const Dashboard: React.FC<DashboardProps> = ({ activeSection, onSectionChange })
             sales={sales}
             payments={payments}
             customers={customers}
+            purchases={purchases}
           />
         </section>
 

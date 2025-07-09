@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import InvoicePreviewModal from './InvoicePreviewModal';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Invoice {
   id: string;
@@ -39,6 +40,7 @@ interface SalesInvoiceListProps {
   customerId?: string;
   invoices?: Invoice[];
   onDeleteInvoice?: (invoiceId: string) => void;
+  onEditInvoice?: (invoice: Invoice) => void;
   showHeader?: boolean;
   title?: string;
 }
@@ -47,11 +49,13 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   customerId, 
   invoices = [],
   onDeleteInvoice,
+  onEditInvoice,
   showHeader = true,
   title = "Sales Invoices"
 }) => {
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const { profile } = useAuth();
 
   const downloadInvoiceAsJSON = (invoice: Invoice) => {
     const dataStr = JSON.stringify(invoice, null, 2);
@@ -69,23 +73,43 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   const doc = new jsPDF();
 
   // --- Header ---
-  doc.setFontSize(22);
-  doc.setTextColor(50, 50, 50); // Darker grey for main title
+  doc.setFontSize(28);
+  doc.setTextColor(0, 0, 0); // Black for main title
   doc.text("INVOICE", doc.internal.pageSize.width / 2, 20, { align: "center" });
 
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100); // Lighter grey for company info (optional)
-  // You can add your company's name, address, and contact here
-  // doc.text("Your Company Name", doc.internal.pageSize.width / 2, 28, { align: "center" });
-  // doc.text("Your Company Address, City, Pincode", doc.internal.pageSize.width / 2, 34, { align: "center" });
-  // doc.text("Phone: XXX-XXX-XXXX | Email: info@yourcompany.com", doc.internal.pageSize.width / 2, 40, { align: "center" });
+  // Company Information
+  if (profile) {
+    doc.setFontSize(14);
+    doc.setTextColor(70, 70, 70);
+    doc.text(profile.organization_name, doc.internal.pageSize.width / 2, 32, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    let yPos = 40;
+    
+    if (profile.phone) {
+      doc.text(`Phone: ${profile.phone}`, doc.internal.pageSize.width / 2, yPos, { align: "center" });
+      yPos += 6;
+    }
+    
+    if (profile.gst_number) {
+      doc.text(`GST Number: ${profile.gst_number}`, doc.internal.pageSize.width / 2, yPos, { align: "center" });
+      yPos += 6;
+    }
+    
+    if (profile.business_type) {
+      doc.text(`Business Type: ${profile.business_type}`, doc.internal.pageSize.width / 2, yPos, { align: "center" });
+      yPos += 6;
+    }
+  }
 
   // Add a line separator
-  doc.setDrawColor(200, 200, 200); // Light grey line
-  doc.line(10, 45, doc.internal.pageSize.width - 10, 45); // x1, y1, x2, y2
+  doc.setDrawColor(0, 0, 0); // Black line for professional look
+  doc.setLineWidth(0.5);
+  doc.line(10, 55, doc.internal.pageSize.width - 10, 55);
 
   // --- Invoice and Customer Details ---
-  let y = 55;
+  let y = 65;
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0); // Black for main text
 
@@ -321,6 +345,17 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
                           <Eye className="w-4 h-4 mr-2" />
                           Preview Invoice
                         </DropdownMenuItem>
+                        {onEditInvoice && (
+                          <DropdownMenuItem 
+                            onClick={() => onEditInvoice(invoice)}
+                            className="cursor-pointer hover:bg-muted/20"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit Invoice
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem 
                           onClick={() => downloadInvoiceAsJSON(invoice)}
                           className="cursor-pointer hover:bg-muted/20"

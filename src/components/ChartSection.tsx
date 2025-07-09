@@ -11,6 +11,7 @@ interface ChartSectionProps {
   sales?: any[];
   payments?: any[];
   customers?: any[];
+  purchases?: any[];
 }
 
 const ChartSection: React.FC<ChartSectionProps> = ({ 
@@ -18,7 +19,8 @@ const ChartSection: React.FC<ChartSectionProps> = ({
   timeFilter = '1month', // Default to 1month (now 30 days)
   sales = [],
   payments = [],
-  customers = []
+  customers = [],
+  purchases = []
 }) => {
   const [activeChart, setActiveChart] = useState('sales');
 
@@ -49,14 +51,14 @@ const ChartSection: React.FC<ChartSectionProps> = ({
       }
     }
 
-    // Convert sales and payments created_at to Date objects for easier comparison
+    // Convert sales and purchases created_at to Date objects for easier comparison
     const parsedSales = sales.map(sale => ({
       ...sale,
       created_at: new Date(sale.created_at)
     }));
-    const parsedPayments = payments.map(payment => ({
-      ...payment,
-      created_at: new Date(payment.created_at)
+    const parsedPurchases = purchases.map(purchase => ({
+      ...purchase,
+      created_at: new Date(purchase.created_at)
     }));
 
     // Populate dataPoints with actual sales and purchases
@@ -129,12 +131,12 @@ const ChartSection: React.FC<ChartSectionProps> = ({
         return sale.created_at >= periodStart && sale.created_at < periodEnd;
       }).reduce((sum, sale) => sum + Number(sale.total_amount), 0);
 
-      const periodPayments = parsedPayments.filter(payment => {
-        return payment.created_at >= periodStart && payment.created_at < periodEnd;
-      }).reduce((sum, payment) => sum + Number(payment.amount_paid), 0);
+      const periodPurchases = parsedPurchases.filter(purchase => {
+        return purchase.created_at >= periodStart && purchase.created_at < periodEnd;
+      }).reduce((sum, purchase) => sum + Number(purchase.total_amount), 0);
 
       dataPoint.sales = periodSales;
-      dataPoint.purchases = periodPayments;
+      dataPoint.purchases = periodPurchases;
     });
 
     return dataPoints;
