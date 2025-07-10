@@ -77,11 +77,15 @@ const amountInWords = (num: number) => {
 };
   const downloadInvoiceAsPDF = (invoice: Invoice) => {
   const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
+const pageWidth = doc.internal.pageSize.getWidth();
+const pageHeight = doc.internal.pageSize.getHeight();
 const formatINR = (num) => num.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-const tableWidth = labelWidth + valueWidth; // 90
-const tableStartX = (pageWidth - tableWidth) / 2; // 60
+
+const labelWidth = 50;
+const valueWidth = 40;
+const tableWidth = labelWidth + valueWidth;
+const tableStartX = (pageWidth - tableWidth) / 2;
+
 
   // --- HEADER ---
   // Company Logo (Optional)
