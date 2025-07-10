@@ -205,7 +205,7 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
 
       {/* Main Content */}
       <main className="pt-16 pb-20 px-4 space-y-6">
-
+ <br />
       
         {/* Quick Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
