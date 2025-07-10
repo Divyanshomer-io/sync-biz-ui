@@ -21,6 +21,7 @@ const ProfileSetup = () => {
     full_name: '',
     organization_name: '',
     phone: '',
+    address: '',
     gst_number: '',
     business_type: ''
   });
@@ -48,7 +49,7 @@ const ProfileSetup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.full_name || !formData.organization_name) {
+    if (!formData.full_name || !formData.organization_name || !formData.phone || !formData.address) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -96,7 +97,7 @@ const ProfileSetup = () => {
               Business Profile Setup
             </CardTitle>
             <CardDescription>
-              This information will be used for your invoices and business records
+              This information will be used in your invoices and business records. You can change it later in your profile settings.
             </CardDescription>
           </CardHeader>
           
@@ -139,7 +140,7 @@ const ProfileSetup = () => {
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-primary" />
-                    Phone Number
+                    Phone Number *
                   </Label>
                   <Input
                     id="phone"
@@ -147,6 +148,23 @@ const ProfileSetup = () => {
                     placeholder="Enter your phone number"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
+                    required
+                  />
+                </div>
+
+                {/* Address */}
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="address" className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    Business Address *
+                  </Label>
+                  <Input
+                    id="address"
+                    type="text"
+                    placeholder="Enter your complete business address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    required
                   />
                 </div>
 
