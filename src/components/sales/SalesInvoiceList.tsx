@@ -77,14 +77,13 @@ const amountInWords = (num: number) => {
 };
   const downloadInvoiceAsPDF = (invoice: Invoice) => {
   const doc = new jsPDF();
+// Declare once at the top of your function
 const pageWidth = doc.internal.pageSize.getWidth();
-const pageHeight = doc.internal.pageSize.getHeight();
-const formatINR = (num) => num.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-
 const labelWidth = 50;
 const valueWidth = 40;
 const tableWidth = labelWidth + valueWidth;
 const tableStartX = (pageWidth - tableWidth) / 2;
+
 
 
   // --- HEADER ---
