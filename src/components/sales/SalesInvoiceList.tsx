@@ -79,6 +79,7 @@ const amountInWords = (num: number) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
+const formatINR = (num) => num.toLocaleString('en-IN', { minimumFractionDigits: 2 });
 
   // --- HEADER ---
   // Company Logo (Optional)
@@ -195,47 +196,48 @@ const amountInWords = (num: number) => {
   y += 8;
 
   // --- TOTALS SUMMARY ---
-// Set up constants for layout
-const marginX = 12;
-const rowHeight = 8;
-const highlightHeight = rowHeight + 4; // Extra padding for highlight
-const totalLabelX = pageWidth - 70;
-const totalValueX = pageWidth - 18;
+const tableStartX = 120; // adjust as per your page width
+const tableStartY = y;   // y is your current vertical position
+const labelWidth = 50;
+const valueWidth = 40;
+const rowHeight = 10;
 
-// Subtotal
-doc.setFontSize(10);
-doc.setTextColor(44, 44, 44);
-doc.setFont('helvetica', 'normal');
-doc.text('Subtotal:', totalLabelX, y, { align: 'right' });
-doc.text(`${(invoice.subtotal || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
-y += rowHeight;
-
-// GST Amount
-doc.text('GST Amount:', totalLabelX, y, { align: 'right' });
-doc.text(`${(invoice.gst_amount || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
-y += rowHeight;
-
-// Transport Charges
-doc.text('Transport Charges:', totalLabelX, y, { align: 'right' });
-doc.text(`${(invoice.transport_charges || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
-y += rowHeight + 2; // Slightly more space before total
-
-// Highlighted Total Amount Row
-const highlightY = y - 4; // Start rectangle a bit above text
-const highlightWidth = pageWidth - marginX * 2;
+// Draw background for Total Amount row (the 4th row)
 doc.setFillColor(230, 230, 230);
-doc.rect(marginX, highlightY, highlightWidth, highlightHeight, 'F'); // Highlight full row
+doc.rect(tableStartX, tableStartY + rowHeight * 3, labelWidth + valueWidth, rowHeight, 'F');
 
-doc.setFontSize(12);
-doc.setFont('helvetica', 'bold');
-doc.setTextColor(44, 44, 44);
-doc.text('Total Amount:', totalLabelX, y + 3, { align: 'right' });
-doc.text(`${invoice.grandTotal.toFixed(2)} (inr)`, totalValueX, y + 3, { align: 'right' });
+// Draw borders for all rows and columns
+for (let i = 0; i < 4; i++) {
+  doc.rect(tableStartX, tableStartY + rowHeight * i, labelWidth, rowHeight); // Label cell
+  doc.rect(tableStartX + labelWidth, tableStartY + rowHeight * i, valueWidth, rowHeight); // Value cell
+}
 
-// Reset font and color for further content
+// Set font for table
+doc.setFontSize(10);
 doc.setFont('helvetica', 'normal');
 doc.setTextColor(44, 44, 44);
-y += highlightHeight + 6; // Move y for next section
+
+// Row 1: Subtotal
+doc.text('Subtotal', tableStartX + 4, tableStartY + rowHeight * 0 + 7);
+doc.text(formatINR(invoice.subtotal || 0) + ' (inr)', tableStartX + labelWidth + valueWidth - 4, tableStartY + rowHeight * 0 + 7, { align: 'right' });
+
+// Row 2: GST Amount
+doc.text('GST Amount', tableStartX + 4, tableStartY + rowHeight * 1 + 7);
+doc.text(formatINR(invoice.gst_amount || 0) + ' (inr)', tableStartX + labelWidth + valueWidth - 4, tableStartY + rowHeight * 1 + 7, { align: 'right' });
+
+// Row 3: Transport Charges
+doc.text('Transport Charges', tableStartX + 4, tableStartY + rowHeight * 2 + 7);
+doc.text(formatINR(invoice.transport_charges || 0) + ' (inr)', tableStartX + labelWidth + valueWidth - 4, tableStartY + rowHeight * 2 + 7, { align: 'right' });
+
+// Row 4: Total Amount (highlighted)
+doc.setFont('helvetica', 'bold');
+doc.text('Total Amount', tableStartX + 4, tableStartY + rowHeight * 3 + 7);
+doc.text(formatINR(invoice.grandTotal) + ' (inr)', tableStartX + labelWidth + valueWidth - 4, tableStartY + rowHeight * 3 + 7, { align: 'right' });
+doc.setFont('helvetica', 'normal');
+
+// Move y below the totals table for next content
+y = tableStartY + rowHeight * 4 + 6;
+
 
 
   // --- AMOUNT IN WORDS ---
