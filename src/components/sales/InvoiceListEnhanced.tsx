@@ -319,10 +319,24 @@ const InvoiceListEnhanced: React.FC<InvoiceListEnhancedProps> = ({
   };
 
   const transformInvoiceForPreview = (invoice: Invoice) => {
+    // Ensure status is properly typed for the modal
+    const validStatus = ['paid', 'unpaid', 'partial'].includes(invoice.status) 
+      ? invoice.status as 'paid' | 'unpaid' | 'partial'
+      : 'unpaid' as const;
+
     return {
       ...invoice,
       date: invoice.invoice_date,
-      grandTotal: invoice.total_amount
+      grandTotal: invoice.total_amount,
+      status: validStatus,
+      customerName: invoice.customer?.name,
+      items: (invoice.items || []).map(item => ({
+        name: item.item_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        rate: item.rate_per_unit,
+        amount: item.amount
+      }))
     };
   };
 
