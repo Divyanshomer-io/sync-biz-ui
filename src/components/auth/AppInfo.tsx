@@ -37,7 +37,7 @@ const AppInfo: React.FC<AppInfoProps> = ({ onBack }) => {
             About BizTrack and its developer
           </p>
         </div>
-
+<Card>
         {/* Developer Information */}
        <CardContent className="space-y-4">
   <div className="space-y-3">
