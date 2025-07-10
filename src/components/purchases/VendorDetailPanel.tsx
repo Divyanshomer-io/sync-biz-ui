@@ -205,6 +205,26 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
 
       {/* Main Content */}
       <main className="pt-16 pb-20 px-4 space-y-6">
+
+      
+        {/* Quick Actions */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button 
+            className="flex-1"
+            onClick={() => setShowCreatePurchase(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Purchase
+          </Button>
+          <Button 
+            variant="outline"
+            className="flex-1"
+            onClick={() => setShowAddPayment(true)}
+          >
+            <CreditCard className="w-4 h-4 mr-2" />
+            Add Payment
+          </Button>
+        </div>
         {/* KPI Metrics Cards */}
        {/* Purchase KPI Metrics */}
 <div className="grid grid-cols-2 gap-3 sm:gap-4">
