@@ -53,99 +53,84 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   showHeader = true,
   title = "Sales Invoices"
 }) => {
-  const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { profile } = useAuth();
-
-const formatINR = (value: number) =>
-  `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-
-const amountInWords = (num: number) => {
-  const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
-    'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
-    'Seventeen', 'Eighteen', 'Nineteen'];
-  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-  const inWords = (n: number): string => {
-    if (n < 20) return a[n];
-    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? ' ' + a[n % 10] : '');
-    if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred ' + (n % 100 ? inWords(n % 100) : '');
-    if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand ' + inWords(n % 1000);
-    if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh ' + inWords(n % 100000);
-    return inWords(Math.floor(n / 10000000)) + ' Crore ' + inWords(n % 10000000);
-  };
-  return inWords(Math.floor(num)).trim() + ' Rupees Only';
-};
-
- const downloadInvoiceAsPDF = (invoice: Invoice) => {
+  const downloadInvoiceAsPDF = (invoice: Invoice) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
-  // --- Header ---
-  doc.setFontSize(28);
-  doc.setTextColor(0, 0, 0); // Black for main title
-  doc.text("INVOICE", doc.internal.pageSize.width / 2, 20, { align: "center" });
+  const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Company Information
+  // --- HEADER ---
+  // Company Logo (Optional)
+  // doc.addImage(profile.logo, 'PNG', 10, 10, 30, 30); // Uncomment if logo is available
+
+  // Invoice Title
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(26);
+  doc.setTextColor(34, 34, 34);
+  doc.text("INVOICE", pageWidth / 2, 22, { align: "center" });
+
+  // Company Details
   if (profile) {
-    doc.setFontSize(14);
-    doc.setTextColor(70, 70, 70);
-    doc.text(profile.organization_name, doc.internal.pageSize.width / 2, 32, { align: "center" });
-    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(44, 44, 44);
+    doc.text(profile.organization_name, pageWidth / 2, 32, { align: "center" });
+
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    let yPos = 40;
-    
+    doc.setTextColor(90, 90, 90);
+    let yPos = 39;
+    if (profile.address) {
+      doc.text(profile.address, pageWidth / 2, yPos, { align: "center" });
+      yPos += 5;
+    }
     if (profile.phone) {
-      doc.text(`Phone: ${profile.phone}`, doc.internal.pageSize.width / 2, yPos, { align: "center" });
-      yPos += 6;
+      doc.text(`Phone: ${profile.phone}`, pageWidth / 2, yPos, { align: "center" });
+      yPos += 5;
     }
-    
     if (profile.gst_number) {
-      doc.text(`GST Number: ${profile.gst_number}`, doc.internal.pageSize.width / 2, yPos, { align: "center" });
-      yPos += 6;
+      doc.text(`GST Number: ${profile.gst_number}`, pageWidth / 2, yPos, { align: "center" });
+      yPos += 5;
     }
-    
     if (profile.business_type) {
-      doc.text(`Business Type: ${profile.business_type}`, doc.internal.pageSize.width / 2, yPos, { align: "center" });
-      yPos += 6;
+      doc.text(`Business Type: ${profile.business_type}`, pageWidth / 2, yPos, { align: "center" });
+      yPos += 5;
     }
   }
 
-  // Add a line separator
-  doc.setDrawColor(0, 0, 0); // Black line for professional look
-  doc.setLineWidth(0.5);
-  doc.line(10, 55, doc.internal.pageSize.width - 10, 55);
+  // Divider
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.6);
+  doc.line(10, 55, pageWidth - 10, 55);
 
-  // --- Invoice and Customer Details ---
-  let y = 65;
+  // --- INVOICE & CUSTOMER DETAILS ---
+  let y = 63;
   doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0); // Black for main text
+  doc.setTextColor(44, 44, 44);
 
-  doc.text("Invoice #:", 10, y);
-  doc.setFont(undefined, 'bold');
-  doc.text(`${invoice.id}`, 40, y);
-  doc.setFont(undefined, 'normal');
-
-  doc.text("Date:", doc.internal.pageSize.width / 2, y);
-  doc.setFont(undefined, 'bold');
-  doc.text(`${new Date(invoice.date).toLocaleDateString('en-IN')}`, doc.internal.pageSize.width / 2 + 20, y);
-  doc.setFont(undefined, 'normal');
+  // Two-column layout
+  doc.setFont('helvetica', 'bold');
+  doc.text("Invoice #:", 12, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${invoice.id}`, 35, y);
+  doc.setFont('helvetica', 'bold');
+  doc.text("Date:", pageWidth / 2 + 10, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${new Date(invoice.date).toLocaleDateString('en-IN')}`, pageWidth / 2 + 28, y);
   y += 7;
 
-  doc.text("Bill To:", 10, y);
-  doc.setFont(undefined, 'bold');
-  doc.text(`${invoice.customerName || 'N/A'}`, 40, y);
-  doc.setFont(undefined, 'normal');
-  // You might want to add customer address here if available in invoice object
-  // doc.text(`Customer Address Line 1`, 40, y + 5);
-  // doc.text(`Customer Address Line 2`, 40, y + 10);
-  y += 15; // Adjust y after customer details
+  doc.setFont('helvetica', 'bold');
+  doc.text("Bill To:", 12, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${invoice.customerName || 'N/A'}`, 35, y);
+  doc.setFont('helvetica', 'bold');
+  doc.text("Customer Address:", pageWidth / 2 + 10, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${invoice.customerAddress || 'N/A'}`, pageWidth / 2 + 45, y);
+  y += 10;
 
-  // --- Items Table ---
-  // Define table headers
+  // --- ITEMS TABLE ---
   const tableColumn = ["Item", "Quantity", "Unit", "Rate (₹)", "Amount (₹)"];
-  // Define table rows
   const tableRows: any = [];
-
   invoice.items.forEach(item => {
     tableRows.push([
       item.name,
@@ -156,14 +141,14 @@ const amountInWords = (num: number) => {
     ]);
   });
 
-  autoTable(doc,{
+  autoTable(doc, {
     startY: y,
     head: [tableColumn],
     body: tableRows,
-    theme: 'grid', // 'striped', 'grid', 'plain'
+    theme: 'grid',
     headStyles: {
-      fillColor: [230, 230, 230], // Light grey header
-      textColor: [0, 0, 0],
+      fillColor: [245, 245, 245],
+      textColor: [34, 34, 34],
       fontStyle: 'bold',
       halign: 'center'
     },
@@ -172,6 +157,7 @@ const amountInWords = (num: number) => {
       cellPadding: 2,
       halign: 'left'
     },
+    alternateRowStyles: { fillColor: [255, 255, 255] },
     columnStyles: {
       0: { halign: 'left' },
       1: { halign: 'center' },
@@ -180,20 +166,19 @@ const amountInWords = (num: number) => {
       4: { halign: 'right' }
     },
     didDrawPage: function (data: any) {
-      y = data.cursor.y; // Update y position after table
+      y = data.cursor.y;
     }
   });
 
-  y += 10; // Add some space after the table
+  y += 8;
 
-  // --- Totals and Payment Status ---
+  // --- TOTALS SUMMARY ---
+  const totalLabelX = pageWidth - 70;
+  const totalValueX = pageWidth - 18;
+
   doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
-  doc.setFont(undefined, 'normal'); // Ensure font is normal for this section
-
-  const totalLabelX = doc.internal.pageSize.width - 60; // Align labels to the right
-  const totalValueX = doc.internal.pageSize.width - 15; // Align values further right
-
+  doc.setTextColor(44, 44, 44);
+  doc.setFont('helvetica', 'normal');
   doc.text(`Subtotal:`, totalLabelX, y, { align: 'right' });
   doc.text(`₹${(invoice.subtotal || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
   y += 6;
@@ -204,61 +189,70 @@ const amountInWords = (num: number) => {
 
   doc.text(`Transport Charges:`, totalLabelX, y, { align: 'right' });
   doc.text(`₹${(invoice.transport_charges || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
-  y += 8; // Extra space before total
+  y += 8;
 
+  // Total Amount Highlighted
   doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.text(`Total Amount:`, totalLabelX, y, { align: 'right' });
-  doc.text(`₹${invoice.grandTotal.toFixed(2)}`, totalValueX, y, { align: 'right' });
-  doc.setFont(undefined, 'normal');
-  y += 10;
-
-  // doc.setFontSize(10);
-  // doc.text(`Payment Status:`, 10, y);
-  // doc.setFont(undefined, 'bold');
-  // doc.text(`${invoice.status.toUpperCase()}`, 50, y);
-  // doc.setFont(undefined, 'normal');
-  // y += 6;
-
-  // if (invoice.paidAmount) {
-  //   doc.text(`Paid Amount:`, 10, y);
-  //   doc.setFont(undefined, 'bold');
-  //   doc.text(`₹${invoice.paidAmount.toFixed(2)}`, 50, y);
-  //   doc.setFont(undefined, 'normal');
-  //   y += 6;
-  // }
-  // --- AMOUNT IN WORDS ---
-  y += 110;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('Amount in Words:', 40, y);
-  doc.setFont('courier', 'italic');
-  const words = doc.splitTextToSize(amountInWords(invoice.grandTotal), pageWidth - 80);
-  doc.text(words, 40, y + 16);
-// --- TRANSPORT DETAILS (BOXED) ---
-  y += words.length * 12 + 24;
-  doc.setDrawColor(180);
-  doc.setLineWidth(0.5);
-  doc.rect(40, y, pageWidth - 80, 60, 'S');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('Transport Details:', 50, y + 15);
+  doc.setTextColor(70, 70, 70);
+  doc.setFillColor(230, 230, 230);
+  doc.rect(totalLabelX - 6, y - 5, 65, 10, 'F');
+  doc.text(`Total Amount:`, totalLabelX, y + 3, { align: 'right' });
+  doc.text(`₹${invoice.grandTotal.toFixed(2)}`, totalValueX, y + 3, { align: 'right' });
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text(`Company: ${invoice.transport_company || 'N/A'}`, 50, y + 30);
-  doc.text(`Truck Number: ${invoice.truck_number || 'N/A'}`, 200, y + 30);
-  doc.text(`Driver Contact: ${invoice.driver_contact || 'N/A'}`, 400, y + 30);
+  y += 18;
 
-  // --- FOOTER (THANK YOU) ---
+  // --- AMOUNT IN WORDS ---
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(44, 44, 44);
+  doc.text('Amount in Words:', 14, y);
+  doc.setFont('courier', 'italic');
+  doc.setFontSize(10);
+  const words = doc.splitTextToSize(amountInWords(invoice.grandTotal), pageWidth - 28);
+  doc.text(words, 14, y + 7);
+  y += words.length * 6 + 12;
+
+  // --- TRANSPORT DETAILS (Boxed Section) ---
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.5);
+  doc.rect(12, y, pageWidth - 24, 22, 'S');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('Transport Details:', 16, y + 7);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text(`Company: ${invoice.transport_company || 'N/A'}`, 16, y + 15);
+  doc.text(`Truck Number: ${invoice.truck_number || 'N/A'}`, 80, y + 15);
+  doc.text(`Driver Contact: ${invoice.driver_contact || 'N/A'}`, 150, y + 15);
+  y += 32;
+
+  // --- PAYMENT STATUS (Optional) ---
+  if (invoice.status || invoice.paidAmount) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('Payment Status:', 14, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${invoice.status ? invoice.status.toUpperCase() : 'N/A'}`, 45, y);
+    if (invoice.paidAmount) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Paid Amount:', 90, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`₹${invoice.paidAmount.toFixed(2)}`, 120, y);
+    }
+    y += 10;
+  }
+
+  // --- FOOTER ---
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(9);
-  doc.text('Thank you for your business!', pageWidth / 2, doc.internal.pageSize.getHeight() - 30, { align: 'center' });
+  doc.setTextColor(120, 120, 120);
+  doc.text('Thank you for your business!', pageWidth / 2, pageHeight - 20, { align: 'center' });
 
-  // --- Footer (optional: add company details or thank you message) ---
-  // You might want to add a footer here, e.g., "Thank you for your business!"
-  // doc.setFontSize(10);
-  // doc.setTextColor(150, 150, 150);
-  // doc.text("Thank you for your business!", doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: "center" });
+  // Optional: Invoice Terms
+  // doc.setFont('helvetica', 'normal');
+  // doc.setFontSize(8);
+  // doc.text('Payment due within 15 days.', pageWidth / 2, pageHeight - 14, { align: 'center' });
 
   doc.save(`invoice-${invoice.id}.pdf`);
 };
