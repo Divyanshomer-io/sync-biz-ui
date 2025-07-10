@@ -189,6 +189,7 @@ const SalesManagement: React.FC = () => {
       <CreateInvoiceModal
         isOpen={showCreateInvoice}
         onClose={handleCloseCreateInvoice}
+        onInvoiceCreated={handleInvoiceCreated}
       />
     </div>
   );

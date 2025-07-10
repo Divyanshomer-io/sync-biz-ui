@@ -10,18 +10,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useInvoices, type CreateInvoiceData, type InvoiceItem } from '@/hooks/useInvoices';
 import { useCustomers } from '@/hooks/useCustomers';
-import CustomerSelector from './CustomerSelector';
 import { Plus, Trash2, Calculator } from 'lucide-react';
 
 interface CreateInvoiceModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onInvoiceCreated?: () => void;
   preSelectedCustomerId?: string;
 }
 
 const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
   isOpen,
   onClose,
+  onInvoiceCreated,
   preSelectedCustomerId
 }) => {
   const [customerId, setCustomerId] = useState(preSelectedCustomerId || '');
@@ -37,10 +38,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     { item_name: '', quantity: 1, unit: 'pcs', rate_per_unit: 0, amount: 0 }
   ]);
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const { createInvoice } = useInvoices();
-  const { customers, createCustomer } = useCustomers();
+  const { customers } = useCustomers();
   const { toast } = useToast();
 
   const units = ['pcs', 'kg', 'gm', 'ltr', 'mtr', 'ft', 'box', 'bag', 'bottle', 'carton'];
@@ -120,6 +120,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       
       onClose();
       resetForm();
+      onInvoiceCreated?.();
     } catch (error) {
       console.error('Error creating invoice:', error);
       // Error is handled in the hook
@@ -139,17 +140,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
 
   const { subtotal, gstAmount, total } = calculateTotals();
 
-  // Find the selected customer object
-  const selectedCustomer = customers.find(customer => customer.id === customerId);
-
-  const handleQuickPayment = (customer: any) => {
-    console.log('Quick payment for customer:', customer);
-  };
-
-  const handleNewSale = (customer: any) => {
-    console.log('New sale for customer:', customer);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -164,16 +154,23 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
           {/* Customer Selection */}
           <div className="space-y-2">
             <Label>Customer *</Label>
-            <CustomerSelector
-              customers={customers}
-              selectedCustomer={selectedCustomer || null}
-              onCustomerSelect={(customer) => setCustomerId(customer.id)}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onCustomerCreated={createCustomer}
-              onQuickPayment={handleQuickPayment}
-              onNewSale={handleNewSale}
-            />
+            <Select value={customerId} onValueChange={setCustomerId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a customer" />
+              </SelectTrigger>
+              <SelectContent>
+                {customers.map(customer => (
+                  <SelectItem key={customer.id} value={customer.id}>
+                    {customer.name} - {customer.phone || customer.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {customers.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No customers found. Add a customer first.
+              </p>
+            )}
           </div>
 
           {/* Items Section */}
