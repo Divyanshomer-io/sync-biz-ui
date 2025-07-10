@@ -11,34 +11,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCustomers } from '@/hooks/useCustomers';
-import { useInvoices } from '@/hooks/useInvoices';
+import { useSales } from '@/hooks/useSales';
 import { usePayments } from '@/hooks/usePayments';
 import CustomerList from './CustomerList';
 import CustomerDetailPanel from './CustomerDetailPanel';
 import CreateCustomerModal from './CreateCustomerModal';
-import CreateInvoiceModal from './CreateInvoiceModal';
-import InvoiceListEnhanced from './InvoiceListEnhanced';
+import SalesInvoiceList from './SalesInvoiceList';
 
 const SalesManagement: React.FC = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddCustomer, setShowAddCustomer] = useState(false);
-  const [showCreateInvoice, setShowCreateInvoice] = useState(false);
 
   const { customers, refetch: refetchCustomers } = useCustomers();
-  const { invoices, refetch: refetchInvoices } = useInvoices();
+  const { sales, refetch: refetchSales } = useSales();
   const { refetch: refetchPayments } = usePayments();
 
   // Set up real-time data refresh
   useEffect(() => {
     const interval = setInterval(() => {
       refetchCustomers();
-      refetchInvoices();
+      refetchSales();
       refetchPayments();
     }, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
-  }, [refetchCustomers, refetchInvoices, refetchPayments]);
+  }, [refetchCustomers, refetchSales, refetchPayments]);
 
   const hasData = customers.length > 0;
 
@@ -71,18 +69,25 @@ const SalesManagement: React.FC = () => {
     refetchCustomers();
   };
 
-  const handleCreateInvoice = () => {
-    setShowCreateInvoice(true);
+  // Transform sales to invoices format for display
+  const transformSalesToInvoices = (salesData: any[]) => {
+    return salesData.map(sale => ({
+      ...sale,
+      date: sale.invoice_date || sale.created_at,
+      grandTotal: sale.total_amount,
+      status: 'paid' as const,
+      items: [{
+        name: sale.item_name,
+        quantity: sale.quantity,
+        unit: sale.unit,
+        rate: sale.rate_per_unit,
+        amount: sale.subtotal
+      }],
+      customerName: customers.find(c => c.id === sale.customer_id)?.name || 'Unknown'
+    }));
   };
 
-  const handleCloseCreateInvoice = () => {
-    setShowCreateInvoice(false);
-  };
-
-  const handleInvoiceCreated = () => {
-    setShowCreateInvoice(false);
-    refetchInvoices();
-  };
+  const recentInvoices = transformSalesToInvoices(sales.slice(0, 10));
 
   if (selectedCustomer) {
     return (
@@ -105,24 +110,14 @@ const SalesManagement: React.FC = () => {
             <h1 className="text-xl font-bold text-foreground">Sales</h1>
           </div>
           
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleCreateInvoice}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Invoice
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleAddCustomerClick}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Customer
-            </Button>
-          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleAddCustomerClick}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Customer
+          </Button>
         </div>
       </header>
 
@@ -166,15 +161,23 @@ const SalesManagement: React.FC = () => {
           isEmpty={!hasData}
         />
 
-        {/* All Invoices List */}
-        {invoices.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5" />
-              All Invoices
-            </h2>
-            <InvoiceListEnhanced />
-          </div>
+        {/* Recent Sales Invoices - Always show if there are sales */}
+        {sales.length > 0 && (
+          <div className="mt-8 px-4 sm:px-8">
+  <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+    <ShoppingCart className="w-5 h-5" />
+    Recent Sales Invoices
+  </h2>
+
+  <div className="overflow-x-auto">
+    <SalesInvoiceList 
+      invoices={recentInvoices}
+      showHeader={false}
+      title="Recent Sales"
+    />
+  </div>
+</div>
+
         )}
       </main>
 
@@ -183,13 +186,6 @@ const SalesManagement: React.FC = () => {
         isOpen={showAddCustomer}
         onClose={handleCloseAddCustomer}
         onCustomerCreated={handleCustomerCreated}
-      />
-
-      {/* Create Invoice Modal */}
-      <CreateInvoiceModal
-        isOpen={showCreateInvoice}
-        onClose={handleCloseCreateInvoice}
-        onInvoiceCreated={handleInvoiceCreated}
       />
     </div>
   );

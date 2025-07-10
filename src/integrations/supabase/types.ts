@@ -68,115 +68,6 @@ export type Database = {
         }
         Relationships: []
       }
-      invoice_items: {
-        Row: {
-          amount: number
-          created_at: string
-          id: string
-          invoice_id: string
-          item_name: string
-          quantity: number
-          rate_per_unit: number
-          unit: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          id?: string
-          invoice_id: string
-          item_name: string
-          quantity: number
-          rate_per_unit: number
-          unit: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          id?: string
-          invoice_id?: string
-          item_name?: string
-          quantity?: number
-          rate_per_unit?: number
-          unit?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoice_items_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "invoices"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      invoices: {
-        Row: {
-          created_at: string
-          customer_id: string
-          delivery_notes: string | null
-          driver_contact: string | null
-          gst_amount: number
-          gst_percentage: number
-          id: string
-          invoice_date: string
-          paid_amount: number | null
-          status: string
-          subtotal: number
-          total_amount: number
-          transport_charges: number
-          transport_company: string | null
-          truck_number: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          customer_id: string
-          delivery_notes?: string | null
-          driver_contact?: string | null
-          gst_amount?: number
-          gst_percentage?: number
-          id?: string
-          invoice_date?: string
-          paid_amount?: number | null
-          status?: string
-          subtotal?: number
-          total_amount?: number
-          transport_charges?: number
-          transport_company?: string | null
-          truck_number?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Update: {
-          created_at?: string
-          customer_id?: string
-          delivery_notes?: string | null
-          driver_contact?: string | null
-          gst_amount?: number
-          gst_percentage?: number
-          id?: string
-          invoice_date?: string
-          paid_amount?: number | null
-          status?: string
-          subtotal?: number
-          total_amount?: number
-          transport_charges?: number
-          transport_company?: string | null
-          truck_number?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoices_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       payments: {
         Row: {
           amount_paid: number
@@ -376,7 +267,6 @@ export type Database = {
       }
       user_profiles: {
         Row: {
-          address: string | null
           business_type: string | null
           created_at: string | null
           full_name: string
@@ -386,7 +276,6 @@ export type Database = {
           phone: string | null
         }
         Insert: {
-          address?: string | null
           business_type?: string | null
           created_at?: string | null
           full_name: string
@@ -396,7 +285,6 @@ export type Database = {
           phone?: string | null
         }
         Update: {
-          address?: string | null
           business_type?: string | null
           created_at?: string | null
           full_name?: string
