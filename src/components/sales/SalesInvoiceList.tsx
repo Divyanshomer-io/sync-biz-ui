@@ -78,147 +78,128 @@ const amountInWords = (num: number) => {
 
 const downloadInvoiceAsPDF = (invoice: Invoice, profile: any) => {
   const doc = new jsPDF();
+  doc.setFont('helvetica', 'normal');
 
+  // --- HEADER ---
+  doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
   doc.text('INVOICE', doc.internal.pageSize.width - 20, 20, { align: 'right' });
 
+  // --- BILLING DETAILS ---
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  let y = 20;
+  doc.text('Invoice #:', 10, 20);
+  doc.text(invoice.id || 'N/A', 35, 20);
 
-  // LEFT: Invoice metadata
-  doc.text('Invoice #: ', 10, y);
-  doc.text(`${invoice.id}`, 35, y);
+  doc.text('Invoice Date:', 10, 26);
+  doc.text(new Date(invoice.date).toLocaleDateString('en-IN'), 35, 26);
 
-  y += 6;
-  doc.text('Invoice Date: ', 10, y);
-  doc.text(`${new Date(invoice.date).toLocaleDateString('en-IN')}`, 35, y);
+  doc.text('Due Date:', 10, 32);
+  doc.text(invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-IN') : 'N/A', 35, 32);
 
-  y += 6;
-  doc.text('Due Date: ', 10, y);
-  doc.text(`${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-IN') : 'N/A'}`, 35, y);
-
-  // BILL TO (Customer)
-  y += 10;
+  // --- BILL TO / FROM ---
+  let y = 42;
   doc.setFont('helvetica', 'bold');
   doc.text('Bill To:', 10, y);
-  y += 6;
   doc.setFont('helvetica', 'normal');
-  doc.text(`${invoice.customerName || 'N/A'}`, 10, y); y += 5;
-  if (invoice.customerAddress) {
-    doc.text(invoice.customerAddress, 10, y); y += 5;
-  }
-  doc.text(`Phone: ${invoice.customerPhone || 'N/A'}`, 10, y);
+  doc.text(invoice.customerName || 'N/A', 10, y + 6);
+  doc.text(`Phone: ${invoice.customerPhone || 'N/A'}`, 10, y + 12);
 
-  // BILL FROM (Company)
-  y = 40;
-  const rightX = doc.internal.pageSize.width / 2 + 10;
   doc.setFont('helvetica', 'bold');
-  doc.text('Bill From:', rightX, y);
-  y += 6;
+  doc.text('Bill From:', 105, y);
   doc.setFont('helvetica', 'normal');
-  if (profile) {
-    doc.text(`${profile.organization_name || 'Company'}`, rightX, y); y += 5;
-    if (profile.business_address) {
-      doc.text(profile.business_address, rightX, y); y += 5;
-    }
-    doc.text(`Phone: ${profile.phone || 'N/A'}`, rightX, y); y += 5;
-    doc.text(`GST: ${profile.gst_number || 'N/A'}`, rightX, y);
-  }
+  doc.text(profile?.organization_name || '', 105, y + 6);
+  if (profile?.phone) doc.text(`Phone: ${profile.phone}`, 105, y + 12);
+  if (profile?.gst_number) doc.text(`GST: ${profile.gst_number}`, 105, y + 18);
 
-  // Items Table
-  y = 90;
+  // --- ITEMS TABLE ---
+  y += 30;
   const tableRows = invoice.items.map((item, index) => [
     `${index + 1}`,
     item.name,
-    formatINR(item.rate),
+    item.unit || '',
     `${item.quantity}`,
-    formatINR(item.amount)
+    formatINR(item.rate),
+    formatINR(item.amount),
   ]);
+
   autoTable(doc, {
     startY: y,
-    head: [['#', 'Description', 'Price', 'Qty', 'Total']],
+    head: [['#', 'Description', 'Unit', 'Qty', 'Rate', 'Amount']],
     body: tableRows,
     theme: 'grid',
+    styles: {
+      fontSize: 10,
+      cellPadding: 2,
+    },
     headStyles: {
       fillColor: [240, 240, 240],
       textColor: 0,
       fontStyle: 'bold',
     },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 10 },
+      1: { cellWidth: 50 },
+      2: { halign: 'center', cellWidth: 20 },
+      3: { halign: 'center', cellWidth: 20 },
+      4: { halign: 'right', cellWidth: 30 },
+      5: { halign: 'right', cellWidth: 30 },
+    },
+    didDrawPage: function (data) {
+      y = data.cursor.y + 10;
+    },
+  });
+
+  // --- TOTAL SUMMARY TABLE ---
+  autoTable(doc, {
+    startY: y,
+    margin: { left: doc.internal.pageSize.width - 85 },
+    head: [['Description', 'Amount']],
+    body: [
+      ['Subtotal', formatINR(invoice.subtotal || 0)],
+      ['GST', formatINR(invoice.gst_amount || 0)],
+      ['Transport', formatINR(invoice.transport_charges || 0)],
+      [{ content: 'TOTAL DUE', styles: { fontStyle: 'bold' } }, formatINR(invoice.grandTotal)],
+    ],
+    theme: 'grid',
     styles: {
       fontSize: 10,
       cellPadding: 3,
     },
+    headStyles: {
+      fillColor: [240, 240, 240],
+      textColor: 0,
+      fontStyle: 'bold',
+    },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 10 },
-      1: { cellWidth: 70 },
-      2: { halign: 'right' },
-      3: { halign: 'center' },
-      4: { halign: 'right' },
+      0: { cellWidth: 40 },
+      1: { halign: 'right', cellWidth: 30 },
     },
     didDrawPage: function (data) {
-      y = data.cursor.y;
+      y = data.cursor.y + 10;
     },
   });
 
-  // Totals
-  y += 10;
-  const labelX = doc.internal.pageSize.width - 60;
-  const valueX = doc.internal.pageSize.width - 15;
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Subtotal:', labelX, y, { align: 'right' });
-  doc.text(formatINR(invoice.subtotal || 0), valueX, y, { align: 'right' }); y += 6;
-
-  doc.text('GST:', labelX, y, { align: 'right' });
-  doc.text(formatINR(invoice.gst_amount || 0), valueX, y, { align: 'right' }); y += 6;
-
-  doc.text('Transport:', labelX, y, { align: 'right' });
-  doc.text(formatINR(invoice.transport_charges || 0), valueX, y, { align: 'right' }); y += 8;
-
+  // --- AMOUNT IN WORDS ---
   doc.setFont('helvetica', 'bold');
-  doc.text('TOTAL DUE:', labelX, y, { align: 'right' });
-  doc.text(formatINR(invoice.grandTotal), valueX, y, { align: 'right' }); y += 10;
-
-  // Amount in words
-  doc.setFont('helvetica', 'bold');
-  doc.text('Amount in Words:', 10, y); y += 5;
+  doc.text('Amount in Words:', 10, y);
   doc.setFont('helvetica', 'normal');
   const words = doc.splitTextToSize(amountInWords(invoice.grandTotal), doc.internal.pageSize.width - 20);
-  doc.text(words, 10, y);
-  y += words.length * 5 + 5;
+  doc.text(words, 10, y + 5);
+  y += words.length * 5 + 8;
 
-  // Payment status
-  // doc.setFont('helvetica', 'bold');
-  // doc.text(`Payment Status:`, 10, y);
-  // doc.setFont('helvetica', 'normal');
-  // doc.text(`${invoice.status?.toUpperCase() || 'UNPAID'}`, 50, y); y += 6;
-
-  // if (invoice.paidAmount) {
-  //   doc.text(`Paid Amount: ₹${invoice.paidAmount.toFixed(2)}`, 10, y);
-  //   y += 6;
-  // }
-
-  // Transport Details
-  y += 6;
+  // --- TRANSPORT DETAILS ---
   doc.setFont('helvetica', 'bold');
-  doc.text('Transport Details:', 10, y); y += 5;
+  doc.text('Transport Details:', 10, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Company: ${invoice.transport_company || 'N/A'}`, 10, y); y += 5;
-  doc.text(`Truck Number: ${invoice.truck_number || 'N/A'}`, 10, y); y += 5;
-  doc.text(`Driver Contact: ${invoice.driver_contact || 'N/A'}`, 10, y); y += 8;
+  y += 6;
+  doc.text(`Company: ${invoice.transport_company || 'N/A'}`, 10, y);
+  y += 5;
+  doc.text(`Truck Number: ${invoice.truck_number || 'N/A'}`, 10, y);
+  y += 5;
+  doc.text(`Driver Contact: ${invoice.driver_contact || 'N/A'}`, 10, y);
 
-  // Notes (if any)
-  if (invoice.delivery_notes) {
-    doc.setFont('helvetica', 'bold');
-    doc.text('Notes:', 10, y); y += 5;
-    doc.setFont('helvetica', 'normal');
-    const notes = doc.splitTextToSize(invoice.delivery_notes, doc.internal.pageSize.width - 20);
-    doc.text(notes, 10, y);
-  }
-
+  // --- SAVE FILE ---
   doc.save(`invoice-${invoice.id}.pdf`);
 };
 
