@@ -80,50 +80,59 @@ const downloadInvoiceAsPDF = (invoice, profile) => {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // --- HEADER WITH LOGO & BUSINESS INFO ---
-  const logoUrl = profile?.logoUrl || null; // Set your logo URL if available
-  let y = 40;
-  if (logoUrl) {
-    doc.addImage(logoUrl, 'PNG', 40, y, 80, 40);
-  }
+  // --- HEADER WITH LOGO & COLOR BAND ---
+  const brandColor = [34, 49, 63]; // Deep blue, change as needed
+  doc.setFillColor(...brandColor);
+  doc.rect(0, 0, pageWidth, 60, 'F');
   doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255);
   doc.setFontSize(28);
-  doc.text('INVOICE', pageWidth - 40, y + 30, { align: 'right' });
+  doc.text('INVOICE', 40, 40);
 
-  // Business Info
-  doc.setFont('helvetica', 'normal');
+  // Logo (optional)
+  if (profile?.logoUrl) {
+    doc.addImage(profile.logoUrl, 'PNG', pageWidth - 110, 15, 70, 35);
+  }
+
+  // --- BUSINESS INFO (LEFT) & INVOICE META (RIGHT) ---
   doc.setFontSize(10);
-  doc.text(profile?.organization_name || '', 40, y + 60);
-  if (profile?.address) doc.text(profile.address, 40, y + 75);
-  if (profile?.phone) doc.text(`Phone: ${profile.phone}`, 40, y + 90);
-  if (profile?.gst_number) doc.text(`GST: ${profile.gst_number}`, 40, y + 105);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0);
+  let y = 80;
+  doc.text(profile?.organization_name || '', 40, y);
+  if (profile?.address) doc.text(profile.address, 40, y + 15);
+  if (profile?.phone) doc.text(`Phone: ${profile.phone}`, 40, y + 30);
+  if (profile?.gst_number) doc.text(`GST: ${profile.gst_number}`, 40, y + 45);
 
-  // Invoice Meta Info (right side)
-  doc.setFontSize(11);
-  const metaY = y + 60;
-  doc.text('Invoice #: ', pageWidth - 180, metaY);
-  doc.text(invoice.id || 'N/A', pageWidth - 100, metaY);
-  doc.text('Invoice Date: ', pageWidth - 180, metaY + 15);
-  doc.text(new Date(invoice.date).toLocaleDateString('en-IN'), pageWidth - 100, metaY + 15);
-  doc.text('Due Date: ', pageWidth - 180, metaY + 30);
-  doc.text(invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-IN') : 'N/A', pageWidth - 100, metaY + 30);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Invoice #: ', pageWidth - 220, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(invoice.id || 'N/A', pageWidth - 120, y);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Invoice Date: ', pageWidth - 220, y + 15);
+  doc.setFont('helvetica', 'normal');
+  doc.text(new Date(invoice.date).toLocaleDateString('en-IN'), pageWidth - 120, y + 15);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Due Date: ', pageWidth - 220, y + 30);
+  doc.setFont('helvetica', 'normal');
+  doc.text(invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-IN') : 'N/A', pageWidth - 120, y + 30);
 
-  // --- BILL TO / BILL FROM ---
-  y = metaY + 60;
+  // --- BILL TO / BILL FROM (DUAL COLUMN) ---
+  y += 60;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.text('Bill To:', 40, y);
-  doc.text('Bill From:', pageWidth / 2 + 20, y);
+  doc.text('Bill From:', pageWidth / 2 + 10, y);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.text(invoice.customerName || 'N/A', 40, y + 18);
   doc.text(`Phone: ${invoice.customerPhone || 'N/A'}`, 40, y + 33);
-  doc.text(profile?.organization_name || '', pageWidth / 2 + 20, y + 18);
-  if (profile?.phone) doc.text(`Phone: ${profile.phone}`, pageWidth / 2 + 20, y + 33);
-  if (profile?.gst_number) doc.text(`GST: ${profile.gst_number}`, pageWidth / 2 + 20, y + 48);
+  doc.text(profile?.organization_name || '', pageWidth / 2 + 10, y + 18);
+  if (profile?.phone) doc.text(`Phone: ${profile.phone}`, pageWidth / 2 + 10, y + 33);
+  if (profile?.gst_number) doc.text(`GST: ${profile.gst_number}`, pageWidth / 2 + 10, y + 48);
 
-  // --- ITEMS TABLE ---
+  // --- ITEMS TABLE (STYLED) ---
   y += 60;
   const tableRows = invoice.items.map((item, idx) => [
     `${idx + 1}`,
@@ -133,7 +142,6 @@ const downloadInvoiceAsPDF = (invoice, profile) => {
     formatINR(item.rate),
     formatINR(item.amount),
   ]);
-
   autoTable(doc, {
     startY: y,
     head: [['#', 'Description', 'Unit', 'Qty', 'Rate', 'Amount']],
@@ -143,19 +151,18 @@ const downloadInvoiceAsPDF = (invoice, profile) => {
       fontSize: 11,
       cellPadding: 4,
       valign: 'middle',
-      halign: 'center',
     },
     headStyles: {
-      fillColor: [34, 49, 63],
+      fillColor: brandColor,
       textColor: 255,
       fontStyle: 'bold',
     },
     alternateRowStyles: { fillColor: [245, 245, 245] },
     columnStyles: {
-      0: { cellWidth: 30 },
-      1: { cellWidth: 180, halign: 'left' },
-      2: { cellWidth: 50 },
-      3: { cellWidth: 50 },
+      0: { cellWidth: 30, halign: 'center' },
+      1: { cellWidth: 170, halign: 'left' },
+      2: { cellWidth: 50, halign: 'center' },
+      3: { cellWidth: 50, halign: 'center' },
       4: { cellWidth: 70, halign: 'right' },
       5: { cellWidth: 80, halign: 'right' },
     },
@@ -164,58 +171,52 @@ const downloadInvoiceAsPDF = (invoice, profile) => {
     },
   });
 
-  // --- TOTAL SUMMARY BOX ---
-  autoTable(doc, {
-    startY: y,
-    margin: { left: pageWidth - 220 },
-    head: [['Description', 'Amount']],
-    body: [
-      ['Subtotal', formatINR(invoice.subtotal || 0)],
-      ['GST', formatINR(invoice.gst_amount || 0)],
-      ['Transport', formatINR(invoice.transport_charges || 0)],
-      [{ content: 'TOTAL DUE', styles: { fontStyle: 'bold', textColor: [34, 49, 63] } }, formatINR(invoice.grandTotal)],
-    ],
-    theme: 'plain',
-    styles: {
-      fontSize: 11,
-      cellPadding: 5,
-      halign: 'right',
-    },
-    headStyles: {
-      fillColor: [220, 220, 220],
-      textColor: 0,
-      fontStyle: 'bold',
-    },
-    columnStyles: {
-      0: { cellWidth: 90, halign: 'left' },
-      1: { cellWidth: 90, halign: 'right' },
-    },
-    didDrawPage: function (data) {
-      y = data.cursor.y + 20;
-    },
-  });
+  // --- TOTALS BOX (COLORED) ---
+  doc.setFillColor(240, 240, 240);
+  doc.rect(pageWidth - 220, y, 180, 90, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('Subtotal', pageWidth - 210, y + 18);
+  doc.text('GST', pageWidth - 210, y + 36);
+  doc.text('Transport', pageWidth - 210, y + 54);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...brandColor);
+  doc.text('TOTAL DUE', pageWidth - 210, y + 72);
 
-  // --- AMOUNT IN WORDS ---
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0);
+  doc.text(formatINR(invoice.subtotal || 0), pageWidth - 60, y + 18, { align: 'right' });
+  doc.text(formatINR(invoice.gst_amount || 0), pageWidth - 60, y + 36, { align: 'right' });
+  doc.text(formatINR(invoice.transport_charges || 0), pageWidth - 60, y + 54, { align: 'right' });
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...brandColor);
+  doc.text(formatINR(invoice.grandTotal), pageWidth - 60, y + 72, { align: 'right' });
+  doc.setTextColor(0);
+
+  // --- AMOUNT IN WORDS (ITALIC) ---
+  y += 110;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.text('Amount in Words:', 40, y);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('helvetica', 'italic');
   const words = doc.splitTextToSize(amountInWords(invoice.grandTotal), pageWidth - 80);
   doc.text(words, 40, y + 16);
-  y += words.length * 12 + 24;
 
-  // --- TRANSPORT DETAILS BOX ---
+  // --- TRANSPORT DETAILS (BOXED) ---
+  y += words.length * 12 + 24;
   doc.setDrawColor(180);
   doc.setLineWidth(0.5);
   doc.rect(40, y, pageWidth - 80, 60, 'S');
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
   doc.text('Transport Details:', 50, y + 15);
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
   doc.text(`Company: ${invoice.transport_company || 'N/A'}`, 50, y + 30);
   doc.text(`Truck Number: ${invoice.truck_number || 'N/A'}`, 200, y + 30);
   doc.text(`Driver Contact: ${invoice.driver_contact || 'N/A'}`, 400, y + 30);
 
-  // --- OPTIONAL FOOTER ---
+  // --- FOOTER (THANK YOU) ---
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(9);
   doc.text('Thank you for your business!', pageWidth / 2, doc.internal.pageSize.getHeight() - 30, { align: 'center' });
@@ -223,7 +224,6 @@ const downloadInvoiceAsPDF = (invoice, profile) => {
   // --- SAVE FILE ---
   doc.save(`invoice-${invoice.id}.pdf`);
 };
-
 
   const getStatusIcon = (status: string) => {
     switch (status) {
