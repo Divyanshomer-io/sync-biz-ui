@@ -55,7 +55,7 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
 }) => {
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
 const [showPreviewModal, setShowPreviewModal] = useState(false);
-
+ const { profile } = useAuth();
   const downloadInvoiceAsPDF = (invoice: Invoice) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
