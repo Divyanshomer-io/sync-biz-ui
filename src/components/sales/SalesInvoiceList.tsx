@@ -80,6 +80,8 @@ const amountInWords = (num: number) => {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 const formatINR = (num) => num.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+const tableWidth = labelWidth + valueWidth; // 90
+const tableStartX = (pageWidth - tableWidth) / 2; // 60
 
   // --- HEADER ---
   // Company Logo (Optional)
@@ -196,15 +198,17 @@ const formatINR = (num) => num.toLocaleString('en-IN', { minimumFractionDigits: 
   y += 8;
 
   // --- TOTALS SUMMARY ---
-const tableStartX = 120; // adjust as per your page width
-const tableStartY = y;   // y is your current vertical position
+const pageWidth = doc.internal.pageSize.getWidth();
 const labelWidth = 50;
 const valueWidth = 40;
+const tableWidth = labelWidth + valueWidth;
+const tableStartX = (pageWidth - tableWidth) / 2; // This will perfectly center your table
+const tableStartY = y;
 const rowHeight = 10;
 
 // Draw background for Total Amount row (the 4th row)
 doc.setFillColor(230, 230, 230);
-doc.rect(tableStartX, tableStartY + rowHeight * 3, labelWidth + valueWidth, rowHeight, 'F');
+doc.rect(tableStartX, tableStartY + rowHeight * 3, tableWidth, rowHeight, 'F');
 
 // Draw borders for all rows and columns
 for (let i = 0; i < 4; i++) {
@@ -237,7 +241,6 @@ doc.setFont('helvetica', 'normal');
 
 // Move y below the totals table for next content
 y = tableStartY + rowHeight * 4 + 6;
-
 
 
   // --- AMOUNT IN WORDS ---
