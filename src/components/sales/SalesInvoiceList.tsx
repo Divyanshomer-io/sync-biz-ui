@@ -57,145 +57,170 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const { profile } = useAuth();
 
-  const downloadInvoiceAsPDF = (invoice: Invoice) => {
+const formatINR = (value: number) =>
+  `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+const amountInWords = (num: number) => {
+  const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+    'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+    'Seventeen', 'Eighteen', 'Nineteen'];
+  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  const inWords = (n: number): string => {
+    if (n < 20) return a[n];
+    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? ' ' + a[n % 10] : '');
+    if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred ' + (n % 100 ? inWords(n % 100) : '');
+    if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand ' + inWords(n % 1000);
+    if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh ' + inWords(n % 100000);
+    return inWords(Math.floor(n / 10000000)) + ' Crore ' + inWords(n % 10000000);
+  };
+  return inWords(Math.floor(num)).trim() + ' Rupees Only';
+};
+
+export const downloadInvoiceAsPDF = (invoice: Invoice, profile: any) => {
   const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.width;
-  const centerX = pageWidth / 2;
 
-  // --- Header: Company Info & Invoice Title ---
-  doc.setFontSize(22);
-  doc.setFont(undefined, "bold");
-  doc.text("INVOICE", pageWidth - 20, 20, { align: "right" });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.text('INVOICE', doc.internal.pageSize.width - 20, 20, { align: 'right' });
 
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  let y = 20;
+
+  // LEFT: Invoice metadata
+  doc.text('Invoice #: ', 10, y);
+  doc.text(`${invoice.id}`, 35, y);
+
+  y += 6;
+  doc.text('Invoice Date: ', 10, y);
+  doc.text(`${new Date(invoice.date).toLocaleDateString('en-IN')}`, 35, y);
+
+  y += 6;
+  doc.text('Due Date: ', 10, y);
+  doc.text(`${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-IN') : 'N/A'}`, 35, y);
+
+  // BILL TO (Customer)
+  y += 10;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Bill To:', 10, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${invoice.customerName || 'N/A'}`, 10, y); y += 5;
+  if (invoice.customerAddress) {
+    doc.text(invoice.customerAddress, 10, y); y += 5;
+  }
+  doc.text(`Phone: ${invoice.customerPhone || 'N/A'}`, 10, y);
+
+  // BILL FROM (Company)
+  y = 40;
+  const rightX = doc.internal.pageSize.width / 2 + 10;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Bill From:', rightX, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal');
   if (profile) {
-    doc.setFontSize(14);
-    doc.setFont(undefined, "bold");
-    doc.text(profile.organization_name, 10, 20);
-
-    doc.setFontSize(10);
-    doc.setFont(undefined, "normal");
-    let y = 26;
-    if (profile.address) {
-      doc.text(profile.address, 10, y); y += 5;
+    doc.text(`${profile.organization_name || 'Company'}`, rightX, y); y += 5;
+    if (profile.business_address) {
+      doc.text(profile.business_address, rightX, y); y += 5;
     }
-    if (profile.phone) {
-      doc.text(`Phone: ${profile.phone}`, 10, y); y += 5;
-    }
-    if (profile.gst_number) {
-      doc.text(`GST: ${profile.gst_number}`, 10, y); y += 5;
-    }
+    doc.text(`Phone: ${profile.phone || 'N/A'}`, rightX, y); y += 5;
+    doc.text(`GST: ${profile.gst_number || 'N/A'}`, rightX, y);
   }
 
-  // --- To and Ship To ---
-  doc.setFont(undefined, "bold");
-  doc.text("TO:", 10, 50);
-  doc.text("SHIP TO:", centerX, 50);
-
-  doc.setFont(undefined, "normal");
-  doc.text(invoice.customerName || 'N/A', 10, 55);
-  doc.text(invoice.customerCompany || 'N/A', 10, 60);
-  doc.text(invoice.customerAddress || 'N/A', 10, 65);
-
-  doc.text(invoice.shipToName || 'N/A', centerX, 55);
-  doc.text(invoice.shipToCompany || 'N/A', centerX, 60);
-  doc.text(invoice.shipToAddress || 'N/A', centerX, 65);
-
-  // --- Invoice Meta ---
-  doc.text("Invoice #:", 10, 80);
-  doc.text(`${invoice.id}`, 40, 80);
-  doc.text("Date:", 10, 85);
-  doc.text(`${new Date(invoice.date).toLocaleDateString('en-IN')}`, 40, 85);
-  doc.text("Terms:", 10, 90);
-  doc.text("Due on receipt", 40, 90);
-
-  // --- Comments / Instructions ---
-  doc.setFont(undefined, "bold");
-  doc.text("COMMENTS OR SPECIAL INSTRUCTIONS:", 10, 100);
-  doc.setFont(undefined, "normal");
-  doc.setFontSize(9);
-  doc.text("You may add special notes or terms here if needed.", 10, 105);
-
-  // --- Items Table ---
-  const tableColumn = ["QUANTITY", "DESCRIPTION", "UNIT PRICE", "TOTAL"];
-  const tableRows: any = [];
-
-  invoice.items.forEach((item) => {
-    tableRows.push([
-      item.quantity.toString(),
-      item.name,
-      `₹${item.rate.toFixed(2)}`,
-      `₹${item.amount.toFixed(2)}`
-    ]);
-  });
-
+  // Items Table
+  y = 90;
+  const tableRows = invoice.items.map((item, index) => [
+    `${index + 1}`,
+    item.name,
+    formatINR(item.rate),
+    `${item.quantity}`,
+    formatINR(item.amount)
+  ]);
   autoTable(doc, {
-    startY: 115,
-    head: [tableColumn],
+    startY: y,
+    head: [['#', 'Description', 'Price', 'Qty', 'Total']],
     body: tableRows,
-    theme: "grid",
+    theme: 'grid',
     headStyles: {
-      fillColor: [200, 200, 200],
+      fillColor: [240, 240, 240],
       textColor: 0,
-      fontStyle: "bold",
-      halign: "center",
+      fontStyle: 'bold',
     },
     styles: {
-      fontSize: 9,
-      cellPadding: 2,
+      fontSize: 10,
+      cellPadding: 3,
     },
     columnStyles: {
-      0: { halign: "center", cellWidth: 25 },
-      1: { halign: "left", cellWidth: 80 },
-      2: { halign: "right", cellWidth: 35 },
-      3: { halign: "right", cellWidth: 35 },
+      0: { halign: 'center', cellWidth: 10 },
+      1: { cellWidth: 70 },
+      2: { halign: 'right' },
+      3: { halign: 'center' },
+      4: { halign: 'right' },
     },
     didDrawPage: function (data) {
-      let y = data.cursor.y + 10;
-
-      // --- Totals ---
-      const labelX = pageWidth - 70;
-      const valueX = pageWidth - 15;
-      doc.setFontSize(10);
-      doc.setFont(undefined, "normal");
-
-      doc.text("SUBTOTAL:", labelX, y, { align: "right" });
-      doc.text(`₹${invoice.subtotal.toFixed(2)}`, valueX, y, { align: "right" }); y += 6;
-
-      doc.text("GST:", labelX, y, { align: "right" });
-      doc.text(`₹${invoice.gst_amount.toFixed(2)}`, valueX, y, { align: "right" }); y += 6;
-
-      doc.text("TRANSPORT:", labelX, y, { align: "right" });
-      doc.text(`₹${invoice.transport_charges.toFixed(2)}`, valueX, y, { align: "right" }); y += 8;
-
-      doc.setFont(undefined, "bold");
-      doc.setFontSize(11);
-      doc.text("TOTAL DUE:", labelX, y, { align: "right" });
-      doc.text(`₹${invoice.grandTotal.toFixed(2)}`, valueX, y, { align: "right" }); y += 10;
-
-      // --- Payment Info ---
-      doc.setFont(undefined, "normal");
-      doc.setFontSize(10);
-      doc.text(`Payment Status: ${invoice.status.toUpperCase()}`, 10, y); y += 6;
-
-      if (invoice.paidAmount) {
-        doc.text(`Paid Amount: ₹${invoice.paidAmount.toFixed(2)}`, 10, y); y += 6;
-      }
-
-      // --- Footer ---
-      y += 10;
-      doc.setFont(undefined, "bold");
-      doc.text("THANK YOU FOR YOUR BUSINESS!", centerX, y, { align: "center" });
-
-      y += 6;
-      doc.setFont(undefined, "normal");
-      doc.setFontSize(9);
-      doc.text("If you have questions, contact us via phone or email.", centerX, y, { align: "center" });
+      y = data.cursor.y;
     },
   });
+
+  // Totals
+  y += 10;
+  const labelX = doc.internal.pageSize.width - 60;
+  const valueX = doc.internal.pageSize.width - 15;
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Subtotal:', labelX, y, { align: 'right' });
+  doc.text(formatINR(invoice.subtotal || 0), valueX, y, { align: 'right' }); y += 6;
+
+  doc.text('GST:', labelX, y, { align: 'right' });
+  doc.text(formatINR(invoice.gst_amount || 0), valueX, y, { align: 'right' }); y += 6;
+
+  doc.text('Transport:', labelX, y, { align: 'right' });
+  doc.text(formatINR(invoice.transport_charges || 0), valueX, y, { align: 'right' }); y += 8;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('TOTAL DUE:', labelX, y, { align: 'right' });
+  doc.text(formatINR(invoice.grandTotal), valueX, y, { align: 'right' }); y += 10;
+
+  // Amount in words
+  doc.setFont('helvetica', 'bold');
+  doc.text('Amount in Words:', 10, y); y += 5;
+  doc.setFont('helvetica', 'normal');
+  const words = doc.splitTextToSize(amountInWords(invoice.grandTotal), doc.internal.pageSize.width - 20);
+  doc.text(words, 10, y);
+  y += words.length * 5 + 5;
+
+  // Payment status
+  // doc.setFont('helvetica', 'bold');
+  // doc.text(`Payment Status:`, 10, y);
+  // doc.setFont('helvetica', 'normal');
+  // doc.text(`${invoice.status?.toUpperCase() || 'UNPAID'}`, 50, y); y += 6;
+
+  // if (invoice.paidAmount) {
+  //   doc.text(`Paid Amount: ₹${invoice.paidAmount.toFixed(2)}`, 10, y);
+  //   y += 6;
+  // }
+
+  // Transport Details
+  y += 6;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Transport Details:', 10, y); y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Company: ${invoice.transport_company || 'N/A'}`, 10, y); y += 5;
+  doc.text(`Truck Number: ${invoice.truck_number || 'N/A'}`, 10, y); y += 5;
+  doc.text(`Driver Contact: ${invoice.driver_contact || 'N/A'}`, 10, y); y += 8;
+
+  // Notes (if any)
+  if (invoice.delivery_notes) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Notes:', 10, y); y += 5;
+    doc.setFont('helvetica', 'normal');
+    const notes = doc.splitTextToSize(invoice.delivery_notes, doc.internal.pageSize.width - 20);
+    doc.text(notes, 10, y);
+  }
 
   doc.save(`invoice-${invoice.id}.pdf`);
 };
-
 
   const getStatusIcon = (status: string) => {
     switch (status) {
