@@ -37,9 +37,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     { item_name: '', quantity: 1, unit: 'pcs', rate_per_unit: 0, amount: 0 }
   ]);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { createInvoice } = useInvoices();
-  const { customers } = useCustomers();
+  const { customers, createCustomer } = useCustomers();
   const { toast } = useToast();
 
   const units = ['pcs', 'kg', 'gm', 'ltr', 'mtr', 'ft', 'box', 'bag', 'bottle', 'carton'];
@@ -137,6 +138,16 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
   // Find the selected customer object
   const selectedCustomer = customers.find(customer => customer.id === customerId);
 
+  const handleQuickPayment = (customer: any) => {
+    // Quick payment functionality would be implemented here
+    console.log('Quick payment for customer:', customer);
+  };
+
+  const handleNewSale = (customer: any) => {
+    // New sale functionality would be implemented here
+    console.log('New sale for customer:', customer);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -152,9 +163,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
           <div className="space-y-2">
             <Label>Customer *</Label>
             <CustomerSelector
+              customers={customers}
               selectedCustomer={selectedCustomer || null}
               onCustomerSelect={(customer) => setCustomerId(customer.id)}
-              placeholder="Select customer for this invoice"
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onCustomerCreated={createCustomer}
+              onQuickPayment={handleQuickPayment}
+              onNewSale={handleNewSale}
             />
           </div>
 

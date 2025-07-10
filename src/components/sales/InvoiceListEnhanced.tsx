@@ -318,6 +318,14 @@ const InvoiceListEnhanced: React.FC<InvoiceListEnhancedProps> = ({
     }
   };
 
+  const transformInvoiceForPreview = (invoice: Invoice) => {
+    return {
+      ...invoice,
+      date: invoice.invoice_date,
+      grandTotal: invoice.total_amount
+    };
+  };
+
   return (
     <>
       <Card className="glass-card">
@@ -446,7 +454,7 @@ const InvoiceListEnhanced: React.FC<InvoiceListEnhancedProps> = ({
       <InvoicePreviewModal
         isOpen={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
-        invoice={previewInvoice}
+        invoice={previewInvoice ? transformInvoiceForPreview(previewInvoice) : null}
       />
     </>
   );
