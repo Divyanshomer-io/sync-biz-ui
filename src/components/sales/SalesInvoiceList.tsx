@@ -57,204 +57,145 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const { profile } = useAuth();
 
-  const downloadInvoiceAsJSON = (invoice: Invoice) => {
-    const dataStr = JSON.stringify(invoice, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `invoice-${invoice.id}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-
   const downloadInvoiceAsPDF = (invoice: Invoice) => {
   const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.width;
+  const centerX = pageWidth / 2;
 
-  // --- Header ---
-  doc.setFontSize(28);
-  doc.setTextColor(0, 0, 0); // Black for main title
-  doc.text("INVOICE", doc.internal.pageSize.width / 2, 20, { align: "center" });
+  // --- Header: Company Info & Invoice Title ---
+  doc.setFontSize(22);
+  doc.setFont(undefined, "bold");
+  doc.text("INVOICE", pageWidth - 20, 20, { align: "right" });
 
-  // Company Information
   if (profile) {
     doc.setFontSize(14);
-    doc.setTextColor(70, 70, 70);
-    doc.text(profile.organization_name, doc.internal.pageSize.width / 2, 32, { align: "center" });
-    
+    doc.setFont(undefined, "bold");
+    doc.text(profile.organization_name, 10, 20);
+
     doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    let yPos = 40;
-    
+    doc.setFont(undefined, "normal");
+    let y = 26;
+    if (profile.address) {
+      doc.text(profile.address, 10, y); y += 5;
+    }
     if (profile.phone) {
-      doc.text(`Phone: ${profile.phone}`, doc.internal.pageSize.width / 2, yPos, { align: "center" });
-      yPos += 6;
+      doc.text(`Phone: ${profile.phone}`, 10, y); y += 5;
     }
-    
     if (profile.gst_number) {
-      doc.text(`GST Number: ${profile.gst_number}`, doc.internal.pageSize.width / 2, yPos, { align: "center" });
-      yPos += 6;
-    }
-    
-    if (profile.business_type) {
-      doc.text(`Business Type: ${profile.business_type}`, doc.internal.pageSize.width / 2, yPos, { align: "center" });
-      yPos += 6;
+      doc.text(`GST: ${profile.gst_number}`, 10, y); y += 5;
     }
   }
 
-  // Add a line separator
-  doc.setDrawColor(0, 0, 0); // Black line for professional look
-  doc.setLineWidth(0.5);
-  doc.line(10, 55, doc.internal.pageSize.width - 10, 55);
+  // --- To and Ship To ---
+  doc.setFont(undefined, "bold");
+  doc.text("TO:", 10, 50);
+  doc.text("SHIP TO:", centerX, 50);
 
-  // --- Invoice and Customer Details ---
-  let y = 65;
-  doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0); // Black for main text
+  doc.setFont(undefined, "normal");
+  doc.text(invoice.customerName || 'N/A', 10, 55);
+  doc.text(invoice.customerCompany || 'N/A', 10, 60);
+  doc.text(invoice.customerAddress || 'N/A', 10, 65);
 
-  doc.text("Invoice #:", 10, y);
-  doc.setFont(undefined, 'bold');
-  doc.text(`${invoice.id}`, 40, y);
-  doc.setFont(undefined, 'normal');
+  doc.text(invoice.shipToName || 'N/A', centerX, 55);
+  doc.text(invoice.shipToCompany || 'N/A', centerX, 60);
+  doc.text(invoice.shipToAddress || 'N/A', centerX, 65);
 
-  doc.text("Date:", doc.internal.pageSize.width / 2, y);
-  doc.setFont(undefined, 'bold');
-  doc.text(`${new Date(invoice.date).toLocaleDateString('en-IN')}`, doc.internal.pageSize.width / 2 + 20, y);
-  doc.setFont(undefined, 'normal');
-  y += 7;
+  // --- Invoice Meta ---
+  doc.text("Invoice #:", 10, 80);
+  doc.text(`${invoice.id}`, 40, 80);
+  doc.text("Date:", 10, 85);
+  doc.text(`${new Date(invoice.date).toLocaleDateString('en-IN')}`, 40, 85);
+  doc.text("Terms:", 10, 90);
+  doc.text("Due on receipt", 40, 90);
 
-  doc.text("Bill To:", 10, y);
-  doc.setFont(undefined, 'bold');
-  doc.text(`${invoice.customerName || 'N/A'}`, 40, y);
-  doc.setFont(undefined, 'normal');
-  // You might want to add customer address here if available in invoice object
-  // doc.text(`Customer Address Line 1`, 40, y + 5);
-  // doc.text(`Customer Address Line 2`, 40, y + 10);
-  y += 15; // Adjust y after customer details
+  // --- Comments / Instructions ---
+  doc.setFont(undefined, "bold");
+  doc.text("COMMENTS OR SPECIAL INSTRUCTIONS:", 10, 100);
+  doc.setFont(undefined, "normal");
+  doc.setFontSize(9);
+  doc.text("You may add special notes or terms here if needed.", 10, 105);
 
   // --- Items Table ---
-  // Define table headers
-  const tableColumn = ["Item", "Quantity", "Unit", "Rate (₹)", "Amount (₹)"];
-  // Define table rows
+  const tableColumn = ["QUANTITY", "DESCRIPTION", "UNIT PRICE", "TOTAL"];
   const tableRows: any = [];
 
-  invoice.items.forEach(item => {
+  invoice.items.forEach((item) => {
     tableRows.push([
+      item.quantity.toString(),
       item.name,
-      item.quantity,
-      item.unit || '',
-      item.rate.toFixed(2),
-      item.amount.toFixed(2)
+      `₹${item.rate.toFixed(2)}`,
+      `₹${item.amount.toFixed(2)}`
     ]);
   });
 
-  autoTable(doc,{
-    startY: y,
+  autoTable(doc, {
+    startY: 115,
     head: [tableColumn],
     body: tableRows,
-    theme: 'grid', // 'striped', 'grid', 'plain'
+    theme: "grid",
     headStyles: {
-      fillColor: [230, 230, 230], // Light grey header
-      textColor: [0, 0, 0],
-      fontStyle: 'bold',
-      halign: 'center'
+      fillColor: [200, 200, 200],
+      textColor: 0,
+      fontStyle: "bold",
+      halign: "center",
     },
     styles: {
       fontSize: 9,
       cellPadding: 2,
-      halign: 'left'
     },
     columnStyles: {
-      0: { halign: 'left' },
-      1: { halign: 'center' },
-      2: { halign: 'center' },
-      3: { halign: 'right' },
-      4: { halign: 'right' }
+      0: { halign: "center", cellWidth: 25 },
+      1: { halign: "left", cellWidth: 80 },
+      2: { halign: "right", cellWidth: 35 },
+      3: { halign: "right", cellWidth: 35 },
     },
-    didDrawPage: function (data: any) {
-      y = data.cursor.y; // Update y position after table
-    }
+    didDrawPage: function (data) {
+      let y = data.cursor.y + 10;
+
+      // --- Totals ---
+      const labelX = pageWidth - 70;
+      const valueX = pageWidth - 15;
+      doc.setFontSize(10);
+      doc.setFont(undefined, "normal");
+
+      doc.text("SUBTOTAL:", labelX, y, { align: "right" });
+      doc.text(`₹${invoice.subtotal.toFixed(2)}`, valueX, y, { align: "right" }); y += 6;
+
+      doc.text("GST:", labelX, y, { align: "right" });
+      doc.text(`₹${invoice.gst_amount.toFixed(2)}`, valueX, y, { align: "right" }); y += 6;
+
+      doc.text("TRANSPORT:", labelX, y, { align: "right" });
+      doc.text(`₹${invoice.transport_charges.toFixed(2)}`, valueX, y, { align: "right" }); y += 8;
+
+      doc.setFont(undefined, "bold");
+      doc.setFontSize(11);
+      doc.text("TOTAL DUE:", labelX, y, { align: "right" });
+      doc.text(`₹${invoice.grandTotal.toFixed(2)}`, valueX, y, { align: "right" }); y += 10;
+
+      // --- Payment Info ---
+      doc.setFont(undefined, "normal");
+      doc.setFontSize(10);
+      doc.text(`Payment Status: ${invoice.status.toUpperCase()}`, 10, y); y += 6;
+
+      if (invoice.paidAmount) {
+        doc.text(`Paid Amount: ₹${invoice.paidAmount.toFixed(2)}`, 10, y); y += 6;
+      }
+
+      // --- Footer ---
+      y += 10;
+      doc.setFont(undefined, "bold");
+      doc.text("THANK YOU FOR YOUR BUSINESS!", centerX, y, { align: "center" });
+
+      y += 6;
+      doc.setFont(undefined, "normal");
+      doc.setFontSize(9);
+      doc.text("If you have questions, contact us via phone or email.", centerX, y, { align: "center" });
+    },
   });
-
-  y += 10; // Add some space after the table
-
-  // --- Totals and Payment Status ---
-  doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
-  doc.setFont(undefined, 'normal'); // Ensure font is normal for this section
-
-  const totalLabelX = doc.internal.pageSize.width - 60; // Align labels to the right
-  const totalValueX = doc.internal.pageSize.width - 15; // Align values further right
-
-  doc.text(`Subtotal:`, totalLabelX, y, { align: 'right' });
-  doc.text(`₹${(invoice.subtotal || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
-  y += 6;
-
-  doc.text(`GST Amount:`, totalLabelX, y, { align: 'right' });
-  doc.text(`₹${(invoice.gst_amount || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
-  y += 6;
-
-  doc.text(`Transport Charges:`, totalLabelX, y, { align: 'right' });
-  doc.text(`₹${(invoice.transport_charges || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
-  y += 8; // Extra space before total
-
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.text(`Total Amount:`, totalLabelX, y, { align: 'right' });
-  doc.text(`₹${invoice.grandTotal.toFixed(2)}`, totalValueX, y, { align: 'right' });
-  doc.setFont(undefined, 'normal');
-  y += 10;
-
-  doc.setFontSize(10);
-  doc.text(`Payment Status:`, 10, y);
-  doc.setFont(undefined, 'bold');
-  doc.text(`${invoice.status.toUpperCase()}`, 50, y);
-  doc.setFont(undefined, 'normal');
-  y += 6;
-
-  if (invoice.paidAmount) {
-    doc.text(`Paid Amount:`, 10, y);
-    doc.setFont(undefined, 'bold');
-    doc.text(`₹${invoice.paidAmount.toFixed(2)}`, 50, y);
-    doc.setFont(undefined, 'normal');
-    y += 6;
-  }
-
-  // --- Transport Details ---
-  y += 10;
-  doc.setFontSize(11);
-  doc.setFont(undefined, 'bold');
-  doc.text("Transport Details:", 10, y);
-  doc.setFont(undefined, 'normal');
-  y += 6;
-
-  doc.setFontSize(10);
-  doc.text(`Company: ${invoice.transport_company || 'N/A'}`, 10, y); y += 6;
-  doc.text(`Truck Number: ${invoice.truck_number || 'N/A'}`, 10, y); y += 6;
-  doc.text(`Driver Contact: ${invoice.driver_contact || 'N/A'}`, 10, y); y += 6;
-
-  // --- Notes ---
-  y += 10;
-  doc.setFontSize(11);
-  doc.setFont(undefined, 'bold');
-  doc.text("Notes:", 10, y);
-  doc.setFont(undefined, 'normal');
-  y += 6;
-  doc.setFontSize(10);
-  // Max width for notes to wrap text
-  const splitNotes = doc.splitTextToSize(invoice.delivery_notes || 'N/A', doc.internal.pageSize.width - 20);
-  doc.text(splitNotes, 10, y);
-
-
-  // --- Footer (optional: add company details or thank you message) ---
-  // You might want to add a footer here, e.g., "Thank you for your business!"
-  // doc.setFontSize(10);
-  // doc.setTextColor(150, 150, 150);
-  // doc.text("Thank you for your business!", doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: "center" });
 
   doc.save(`invoice-${invoice.id}.pdf`);
 };
+
 
   const getStatusIcon = (status: string) => {
     switch (status) {
