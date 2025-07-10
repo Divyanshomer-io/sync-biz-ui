@@ -76,7 +76,7 @@ const amountInWords = (num: number) => {
   return inWords(Math.floor(num)).trim() + ' Rupees Only';
 };
 
-export const downloadInvoiceAsPDF = (invoice: Invoice, profile: any) => {
+const downloadInvoiceAsPDF = (invoice: Invoice, profile: any) => {
   const doc = new jsPDF();
 
   doc.setFont('helvetica', 'bold');
