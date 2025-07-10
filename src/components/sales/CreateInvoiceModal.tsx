@@ -105,19 +105,23 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
 
     setLoading(true);
     try {
+      // Create ONE invoice with ALL items
       const invoiceData: CreateInvoiceData = {
         customerId,
-        items,
+        items, // All items in one invoice
         gstRate,
         transportCharges,
         transportDetails,
         notes
       };
 
+      console.log('Creating invoice with data:', invoiceData);
       await createInvoice(invoiceData);
+      
       onClose();
       resetForm();
     } catch (error) {
+      console.error('Error creating invoice:', error);
       // Error is handled in the hook
     } finally {
       setLoading(false);
@@ -139,12 +143,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
   const selectedCustomer = customers.find(customer => customer.id === customerId);
 
   const handleQuickPayment = (customer: any) => {
-    // Quick payment functionality would be implemented here
     console.log('Quick payment for customer:', customer);
   };
 
   const handleNewSale = (customer: any) => {
-    // New sale functionality would be implemented here
     console.log('New sale for customer:', customer);
   };
 

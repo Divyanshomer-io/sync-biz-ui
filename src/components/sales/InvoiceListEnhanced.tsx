@@ -13,7 +13,8 @@ import {
   Download,
   FileText,
   Edit,
-  IndianRupee
+  IndianRupee,
+  Package
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,7 @@ const InvoiceListEnhanced: React.FC<InvoiceListEnhancedProps> = ({
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   
   const { profile } = useAuth();
-  const { invoices, deleteInvoice } = useInvoices();
+  const { invoices, deleteInvoice, updateInvoice } = useInvoices();
 
   // Filter invoices by customer if customerId is provided
   const displayInvoices = customerId 
@@ -49,11 +50,10 @@ const InvoiceListEnhanced: React.FC<InvoiceListEnhancedProps> = ({
   const downloadInvoiceAsPDF = (invoice: Invoice) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
     
     // Colors
-    const primaryColor: [number, number, number] = [41, 128, 185]; // Professional blue
-    const secondaryColor: [number, number, number] = [52, 73, 94]; // Dark gray
+    const primaryColor: [number, number, number] = [41, 128, 185];
+    const secondaryColor: [number, number, number] = [52, 73, 94];
     const lightGray: [number, number, number] = [236, 240, 241];
     
     // Header with company details
@@ -260,11 +260,11 @@ const InvoiceListEnhanced: React.FC<InvoiceListEnhancedProps> = ({
     }
     
     // Footer
-    if (yPos < pageHeight - 30) {
+    if (yPos < doc.internal.pageSize.height - 30) {
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(9);
       doc.setTextColor(128, 128, 128);
-      doc.text('Thank you for your business!', pageWidth / 2, pageHeight - 20, { align: 'center' });
+      doc.text('Thank you for your business!', pageWidth / 2, doc.internal.pageSize.height - 20, { align: 'center' });
     }
     
     doc.save(`invoice-${invoice.id}.pdf`);
@@ -318,8 +318,13 @@ const InvoiceListEnhanced: React.FC<InvoiceListEnhancedProps> = ({
     }
   };
 
+  const handleEditInvoice = (invoice: Invoice) => {
+    // For now, just show a toast that edit functionality will be added
+    // In a real implementation, this would open the CreateInvoiceModal in edit mode
+    console.log('Edit invoice:', invoice.id);
+  };
+
   const transformInvoiceForPreview = (invoice: Invoice) => {
-    // Ensure status is properly typed for the modal
     const validStatus = ['paid', 'unpaid', 'partial'].includes(invoice.status) 
       ? invoice.status as 'paid' | 'unpaid' | 'partial'
       : 'unpaid' as const;
@@ -357,41 +362,48 @@ const InvoiceListEnhanced: React.FC<InvoiceListEnhancedProps> = ({
               {displayInvoices.map((invoice) => (
                 <div
                   key={invoice.id}
-                  className="activity-item relative bg-card/20 border border-border/50 rounded-lg p-4 hover:bg-card/30 transition-colors"
+                  className="relative bg-card border border-border rounded-lg p-6 hover:bg-card/80 transition-colors"
                 >
                   {/* Actions dropdown */}
-                  <div className="absolute top-3 right-3 z-10">
+                  <div className="absolute top-4 right-4 z-10">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted/20">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56 bg-card border-border shadow-lg">
+                      <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuItem 
                           onClick={() => handlePreviewInvoice(invoice)}
-                          className="cursor-pointer hover:bg-muted/20"
+                          className="cursor-pointer"
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           Preview Invoice
                         </DropdownMenuItem>
                         <DropdownMenuItem 
+                          onClick={() => handleEditInvoice(invoice)}
+                          className="cursor-pointer"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Invoice
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
                           onClick={() => downloadInvoiceAsPDF(invoice)}
-                          className="cursor-pointer hover:bg-muted/20"
+                          className="cursor-pointer"
                         >
                           <Download className="w-4 h-4 mr-2" />
                           Download PDF
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => downloadEwayBillJSON(invoice)}
-                          className="cursor-pointer hover:bg-muted/20"
+                          className="cursor-pointer"
                         >
                           <FileText className="w-4 h-4 mr-2" />
                           Download E-way Bill
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => handleDeleteInvoice(invoice.id)}
-                          className="cursor-pointer hover:bg-destructive/20 text-destructive"
+                          className="cursor-pointer text-destructive"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete Invoice
@@ -400,59 +412,70 @@ const InvoiceListEnhanced: React.FC<InvoiceListEnhancedProps> = ({
                     </DropdownMenu>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-12">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pr-12">
+                    {/* Invoice Info */}
+                    <div className="flex items-start gap-4 min-w-0 flex-1">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         {getStatusIcon(invoice.status)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="font-medium text-foreground truncate">
-                          Invoice #{invoice.id}
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-foreground text-lg">
+                            #{invoice.id}
+                          </h3>
+                          <Badge className={`${getStatusColor(invoice.status)}`}>
+                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                          </Badge>
                         </div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-2">
-                          <Calendar className="w-3 h-3" />
-                          {formatIndianDate(invoice.invoice_date)}
+                        
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{formatIndianDate(invoice.invoice_date)}</span>
+                          </div>
                           {invoice.customer && (
-                            <>
+                            <div className="flex items-center gap-1">
                               <span>•</span>
-                              <span>{invoice.customer.name}</span>
-                            </>
+                              <span className="font-medium">{invoice.customer.name}</span>
+                            </div>
                           )}
                         </div>
+
+                        {/* Items Summary */}
                         {invoice.items && invoice.items.length > 0 && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {invoice.items.length === 1 
-                              ? invoice.items[0].item_name
-                              : `${invoice.items[0].item_name} +${invoice.items.length - 1} more items`
-                            }
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Package className="w-3 h-3" />
+                            <span>
+                              {invoice.items.length === 1 
+                                ? `${invoice.items[0].item_name} (${invoice.items[0].quantity} ${invoice.items[0].unit})`
+                                : `${invoice.items.length} items: ${invoice.items[0].item_name}${invoice.items.length > 1 ? ` +${invoice.items.length - 1} more` : ''}`
+                              }
+                            </span>
                           </div>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row sm:items-center items-start gap-2 sm:gap-3">
+                    {/* Amount Section */}
+                    <div className="flex flex-col items-end gap-2">
                       <div className="text-right">
-                        <div className="font-semibold text-foreground flex items-center gap-1">
-                          <IndianRupee className="w-4 h-4" />
+                        <div className="text-2xl font-bold text-foreground flex items-center gap-1">
+                          <IndianRupee className="w-5 h-5" />
                           {formatIndianCurrency(invoice.total_amount).replace('₹', '')}
                         </div>
                         {invoice.status === 'partial' && invoice.paid_amount > 0 && (
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-sm text-muted-foreground">
                             Paid: {formatIndianCurrency(invoice.paid_amount)}
                           </div>
                         )}
                       </div>
-                      
-                      <Badge className={`${getStatusColor(invoice.status)} whitespace-nowrap`}>
-                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                      </Badge>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
+            <div className="text-center py-12">
               <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Receipt className="w-8 h-8 text-muted-foreground" />
               </div>
