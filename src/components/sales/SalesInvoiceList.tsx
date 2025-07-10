@@ -53,6 +53,9 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   showHeader = true,
   title = "Sales Invoices"
 }) => {
+  const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
+const [showPreviewModal, setShowPreviewModal] = useState(false);
+
   const downloadInvoiceAsPDF = (invoice: Invoice) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
