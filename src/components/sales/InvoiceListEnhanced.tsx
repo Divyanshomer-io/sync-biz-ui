@@ -446,12 +446,7 @@ const InvoiceListEnhanced: React.FC<InvoiceListEnhancedProps> = ({
       <InvoicePreviewModal
         isOpen={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
-        invoice={previewInvoice ? {
-          ...previewInvoice,
-          date: previewInvoice.invoice_date,
-          grandTotal: previewInvoice.total_amount,
-          status: previewInvoice.status as 'paid' | 'unpaid' | 'partial'
-        } : null}
+        invoice={previewInvoice}
       />
     </>
   );

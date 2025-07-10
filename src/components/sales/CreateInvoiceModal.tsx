@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useInvoices, type CreateInvoiceData, type InvoiceItem } from '@/hooks/useInvoices';
+import { useCustomers } from '@/hooks/useCustomers';
 import CustomerSelector from './CustomerSelector';
 import { Plus, Trash2, Calculator } from 'lucide-react';
 
@@ -37,6 +39,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
   const [loading, setLoading] = useState(false);
 
   const { createInvoice } = useInvoices();
+  const { customers } = useCustomers();
   const { toast } = useToast();
 
   const units = ['pcs', 'kg', 'gm', 'ltr', 'mtr', 'ft', 'box', 'bag', 'bottle', 'carton'];
@@ -131,6 +134,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
 
   const { subtotal, gstAmount, total } = calculateTotals();
 
+  // Find the selected customer object
+  const selectedCustomer = customers.find(customer => customer.id === customerId);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -146,7 +152,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
           <div className="space-y-2">
             <Label>Customer *</Label>
             <CustomerSelector
-              selectedCustomer={customerId}
+              selectedCustomer={selectedCustomer || null}
               onCustomerSelect={(customer) => setCustomerId(customer.id)}
               placeholder="Select customer for this invoice"
             />
@@ -265,7 +271,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             </div>
           </div>
 
-          {/* Transport Details */}
           <div className="space-y-4">
             <Label className="text-lg font-semibold">Transport Details</Label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -296,7 +301,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             </div>
           </div>
 
-          {/* Notes */}
           <div>
             <Label>Delivery Notes</Label>
             <Textarea
@@ -307,7 +311,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             />
           </div>
 
-          {/* Invoice Summary */}
           <Card className="bg-muted/50">
             <CardContent className="p-4">
               <div className="space-y-2">
@@ -331,7 +334,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
           <div className="flex gap-3 justify-end">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
