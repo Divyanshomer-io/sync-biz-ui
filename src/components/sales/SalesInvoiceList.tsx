@@ -78,7 +78,7 @@ const amountInWords = (num: number) => {
 
  const downloadInvoiceAsPDF = (invoice: Invoice) => {
   const doc = new jsPDF();
-
+  const pageWidth = doc.internal.pageSize.getWidth();
   // --- Header ---
   doc.setFontSize(28);
   doc.setTextColor(0, 0, 0); // Black for main title
