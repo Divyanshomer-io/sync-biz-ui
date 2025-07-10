@@ -151,7 +151,7 @@ const amountInWords = (num: number) => {
   y += 10;
 
   // --- ITEMS TABLE ---
-  const tableColumn = ["Item", "Quantity", "Unit", "Rate (₹)", "Amount (₹)"];
+  const tableColumn = ["Item", "Quantity", "Unit", "Rate (inr)", "Amount (inr)"];
   const tableRows: any = [];
   invoice.items.forEach(item => {
     tableRows.push([
@@ -202,25 +202,25 @@ const amountInWords = (num: number) => {
   doc.setTextColor(44, 44, 44);
   doc.setFont('helvetica', 'normal');
   doc.text(`Subtotal:`, totalLabelX, y, { align: 'right' });
-  doc.text(`₹${(invoice.subtotal || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
+  doc.text(`${(invoice.subtotal || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
   y += 6;
 
   doc.text(`GST Amount:`, totalLabelX, y, { align: 'right' });
-  doc.text(`₹${(invoice.gst_amount || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
+  doc.text(`${(invoice.gst_amount || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
   y += 6;
 
   doc.text(`Transport Charges:`, totalLabelX, y, { align: 'right' });
-  doc.text(`₹${(invoice.transport_charges || 0).toFixed(2)}`, totalValueX, y, { align: 'right' });
+  doc.text(`${(invoice.transport_charges || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
   y += 8;
 
   // Total Amount Highlighted
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(70, 70, 70);
-  doc.setFillColor(230, 230, 230);
+  // doc.setTextColor(70, 70, 70);
+  // doc.setFillColor(230, 230, 230);
   doc.rect(totalLabelX - 6, y - 5, 65, 10, 'F');
   doc.text(`Total Amount:`, totalLabelX, y + 3, { align: 'right' });
-  doc.text(`₹${invoice.grandTotal.toFixed(2)}`, totalValueX, y + 3, { align: 'right' });
+  doc.text(`${invoice.grandTotal.toFixed(2)} (inr)`, totalValueX, y + 3, { align: 'right' });
   doc.setFont('helvetica', 'normal');
   y += 18;
 
@@ -250,20 +250,20 @@ const amountInWords = (num: number) => {
   y += 32;
 
   // --- PAYMENT STATUS (Optional) ---
-  if (invoice.status || invoice.paidAmount) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text('Payment Status:', 14, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${invoice.status ? invoice.status.toUpperCase() : 'N/A'}`, 45, y);
-    if (invoice.paidAmount) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Paid Amount:', 90, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`₹${invoice.paidAmount.toFixed(2)}`, 120, y);
-    }
-    y += 10;
-  }
+  // if (invoice.status || invoice.paidAmount) {
+  //   doc.setFont('helvetica', 'bold');
+  //   doc.setFontSize(10);
+  //   doc.text('Payment Status:', 14, y);
+  //   doc.setFont('helvetica', 'normal');
+  //   doc.text(`${invoice.status ? invoice.status.toUpperCase() : 'N/A'}`, 45, y);
+  //   if (invoice.paidAmount) {
+  //     doc.setFont('helvetica', 'bold');
+  //     doc.text('Paid Amount:', 90, y);
+  //     doc.setFont('helvetica', 'normal');
+  //     doc.text(`₹${invoice.paidAmount.toFixed(2)}`, 120, y);
+  //   }
+  //   y += 10;
+  // }
 
   // --- FOOTER ---
   doc.setFont('helvetica', 'italic');
