@@ -79,9 +79,9 @@ const amountInWords = (num: number) => {
 const downloadInvoiceAsPDF = (invoice, profile) => {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
+  const brandColor = [34, 49, 63]; // Brand color for header
 
-  // --- HEADER WITH LOGO & COLOR BAND ---
-  const brandColor = [34, 49, 63]; // Deep blue, change as needed
+  // --- HEADER ---
   doc.setFillColor(...brandColor);
   doc.rect(0, 0, pageWidth, 60, 'F');
   doc.setFont('helvetica', 'bold');
@@ -99,10 +99,10 @@ const downloadInvoiceAsPDF = (invoice, profile) => {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0);
   let y = 80;
-  doc.text(profile?.organization_name || '', 40, y);
-  if (profile?.address) doc.text(profile.address, 40, y + 15);
-  if (profile?.phone) doc.text(`Phone: ${profile.phone}`, 40, y + 30);
-  if (profile?.gst_number) doc.text(`GST: ${profile.gst_number}`, 40, y + 45);
+  doc.text(profile?.organization_name || 'N/A', 40, y);
+  doc.text(profile?.address || 'N/A', 40, y + 15);
+  doc.text(`Phone: ${profile?.phone || 'N/A'}`, 40, y + 30);
+  doc.text(`GST: ${profile?.gst_number || 'N/A'}`, 40, y + 45);
 
   doc.setFont('helvetica', 'bold');
   doc.text('Invoice #: ', pageWidth - 220, y);
@@ -128,11 +128,11 @@ const downloadInvoiceAsPDF = (invoice, profile) => {
   doc.setFontSize(11);
   doc.text(invoice.customerName || 'N/A', 40, y + 18);
   doc.text(`Phone: ${invoice.customerPhone || 'N/A'}`, 40, y + 33);
-  doc.text(profile?.organization_name || '', pageWidth / 2 + 10, y + 18);
-  if (profile?.phone) doc.text(`Phone: ${profile.phone}`, pageWidth / 2 + 10, y + 33);
-  if (profile?.gst_number) doc.text(`GST: ${profile.gst_number}`, pageWidth / 2 + 10, y + 48);
+  doc.text(profile?.organization_name || 'N/A', pageWidth / 2 + 10, y + 18);
+  doc.text(`Phone: ${profile?.phone || 'N/A'}`, pageWidth / 2 + 10, y + 33);
+  doc.text(`GST: ${profile?.gst_number || 'N/A'}`, pageWidth / 2 + 10, y + 48);
 
-  // --- ITEMS TABLE (STYLED) ---
+  // --- ITEMS TABLE (NUMBERS IN COURIER) ---
   y += 60;
   const tableRows = invoice.items.map((item, idx) => [
     `${idx + 1}`,
@@ -159,19 +159,31 @@ const downloadInvoiceAsPDF = (invoice, profile) => {
     },
     alternateRowStyles: { fillColor: [245, 245, 245] },
     columnStyles: {
-      0: { cellWidth: 30, halign: 'center' },
+      0: { cellWidth: 30, halign: 'center', font: 'courier', fontStyle: 'bold' },
       1: { cellWidth: 170, halign: 'left' },
-      2: { cellWidth: 50, halign: 'center' },
-      3: { cellWidth: 50, halign: 'center' },
-      4: { cellWidth: 70, halign: 'right' },
-      5: { cellWidth: 80, halign: 'right' },
+      2: { cellWidth: 50, halign: 'center', font: 'courier' },
+      3: { cellWidth: 50, halign: 'center', font: 'courier' },
+      4: { cellWidth: 70, halign: 'right', font: 'courier', fontStyle: 'bold' },
+      5: { cellWidth: 80, halign: 'right', font: 'courier', fontStyle: 'bold' },
+    },
+    didDrawCell: (data) => {
+      // Apply courier font for all number cells
+      if (
+        data.column.index === 0 ||
+        data.column.index === 3 ||
+        data.column.index === 4 ||
+        data.column.index === 5
+      ) {
+        data.cell.styles.font = 'courier';
+        data.cell.styles.fontStyle = 'bold';
+      }
     },
     didDrawPage: function (data) {
       y = data.cursor.y + 20;
     },
   });
 
-  // --- TOTALS BOX (COLORED) ---
+  // --- TOTALS BOX (NUMBERS IN COURIER) ---
   doc.setFillColor(240, 240, 240);
   doc.rect(pageWidth - 220, y, 180, 90, 'F');
   doc.setFont('helvetica', 'bold');
@@ -183,22 +195,21 @@ const downloadInvoiceAsPDF = (invoice, profile) => {
   doc.setTextColor(...brandColor);
   doc.text('TOTAL DUE', pageWidth - 210, y + 72);
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('courier', 'bold');
   doc.setTextColor(0);
   doc.text(formatINR(invoice.subtotal || 0), pageWidth - 60, y + 18, { align: 'right' });
   doc.text(formatINR(invoice.gst_amount || 0), pageWidth - 60, y + 36, { align: 'right' });
   doc.text(formatINR(invoice.transport_charges || 0), pageWidth - 60, y + 54, { align: 'right' });
-  doc.setFont('helvetica', 'bold');
   doc.setTextColor(...brandColor);
   doc.text(formatINR(invoice.grandTotal), pageWidth - 60, y + 72, { align: 'right' });
   doc.setTextColor(0);
 
-  // --- AMOUNT IN WORDS (ITALIC) ---
+  // --- AMOUNT IN WORDS ---
   y += 110;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.text('Amount in Words:', 40, y);
-  doc.setFont('helvetica', 'italic');
+  doc.setFont('courier', 'italic');
   const words = doc.splitTextToSize(amountInWords(invoice.grandTotal), pageWidth - 80);
   doc.text(words, 40, y + 16);
 
@@ -224,6 +235,7 @@ const downloadInvoiceAsPDF = (invoice, profile) => {
   // --- SAVE FILE ---
   doc.save(`invoice-${invoice.id}.pdf`);
 };
+
 
   const getStatusIcon = (status: string) => {
     switch (status) {
