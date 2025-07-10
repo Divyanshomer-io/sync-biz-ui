@@ -205,23 +205,25 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
       {/* Main Content */}
       <main className="pt-16 pb-20 px-4 space-y-6">
         {/* KPI Metrics Cards */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Vendor Overview</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {metrics.map((metric, index) => (
-              <MetricCard
-                key={index}
-                title={metric.title}
-                value={metric.value}
-                change={metric.change}
-                trend={metric.trend}
-                icon={metric.icon}
-                color={metric.color}
-                isEmpty={metric.isEmpty}
-              />
-            ))}
-          </div>
-        </section>
+       <section className="space-y-4 px-4">
+  <h2 className="text-lg font-semibold text-foreground">Vendor Overview</h2>
+  <div className="grid grid-cols-2 gap-4 max-w-full overflow-hidden">
+    {metrics.map((metric, index) => (
+      <div className="min-w-0" key={index}>
+        <MetricCard
+          title={metric.title}
+          value={metric.value}
+          change={metric.change}
+          trend={metric.trend}
+          icon={metric.icon}
+          color={metric.color}
+          isEmpty={metric.isEmpty}
+        />
+      </div>
+    ))}
+  </div>
+</section>
+
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
