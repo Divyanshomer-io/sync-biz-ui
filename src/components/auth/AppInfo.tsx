@@ -27,6 +27,8 @@ const AppInfo: React.FC<AppInfoProps> = ({ onBack }) => {
             Back to Profile
           </Button>
         </div>
+<Card>
+  <br />
 
         <div className="text-center space-y-4">
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto">
@@ -37,7 +39,7 @@ const AppInfo: React.FC<AppInfoProps> = ({ onBack }) => {
             About BizTrack and its developer
           </p>
         </div>
-<Card>
+
         {/* Developer Information */}
        <CardContent className="space-y-4">
   <div className="space-y-3">
