@@ -89,12 +89,12 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                   <span className="text-sm text-muted-foreground">Date:</span>
                   <span className="text-sm font-medium">{formatDate(invoice.date)}</span>
                 </div>
-                <div className="flex justify-between">
+{/*                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Status:</span>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
                     {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                   </span>
-                </div>
+                </div> */}
                 {invoice.customerName && (
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Customer:</span>
