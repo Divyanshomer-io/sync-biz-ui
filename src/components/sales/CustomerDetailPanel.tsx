@@ -123,6 +123,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onB
       {/* Main Content */}
       <main className="pt-16 pb-20 px-4 space-y-6">
         {/* Quick Actions */}
+         <br />
         <div className="flex flex-col sm:flex-row gap-3">
           <Button 
             className="flex-1"
