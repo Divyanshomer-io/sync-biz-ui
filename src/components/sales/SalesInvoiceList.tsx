@@ -151,7 +151,7 @@ const amountInWords = (num: number) => {
   y += 10;
 
   // --- ITEMS TABLE ---
-  const tableColumn = ["Item", "Quantity", "Unit", "Rate (inr)", "Amount (inr)"];
+  const tableColumn = ["Item", "Quantity", "Unit", "Rate per unit (inr)", "Amount (inr)"];
   const tableRows: any = [];
   invoice.items.forEach(item => {
     tableRows.push([
@@ -195,34 +195,48 @@ const amountInWords = (num: number) => {
   y += 8;
 
   // --- TOTALS SUMMARY ---
-  const totalLabelX = pageWidth - 70;
-  const totalValueX = pageWidth - 18;
+// Set up constants for layout
+const marginX = 12;
+const rowHeight = 8;
+const highlightHeight = rowHeight + 4; // Extra padding for highlight
+const totalLabelX = pageWidth - 70;
+const totalValueX = pageWidth - 18;
 
-  doc.setFontSize(10);
-  doc.setTextColor(44, 44, 44);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Subtotal:`, totalLabelX, y, { align: 'right' });
-  doc.text(`${(invoice.subtotal || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
-  y += 6;
+// Subtotal
+doc.setFontSize(10);
+doc.setTextColor(44, 44, 44);
+doc.setFont('helvetica', 'normal');
+doc.text('Subtotal:', totalLabelX, y, { align: 'right' });
+doc.text(`${(invoice.subtotal || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
+y += rowHeight;
 
-  doc.text(`GST Amount:`, totalLabelX, y, { align: 'right' });
-  doc.text(`${(invoice.gst_amount || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
-  y += 6;
+// GST Amount
+doc.text('GST Amount:', totalLabelX, y, { align: 'right' });
+doc.text(`${(invoice.gst_amount || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
+y += rowHeight;
 
-  doc.text(`Transport Charges:`, totalLabelX, y, { align: 'right' });
-  doc.text(`${(invoice.transport_charges || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
-  y += 8;
+// Transport Charges
+doc.text('Transport Charges:', totalLabelX, y, { align: 'right' });
+doc.text(`${(invoice.transport_charges || 0).toFixed(2)} (inr)`, totalValueX, y, { align: 'right' });
+y += rowHeight + 2; // Slightly more space before total
 
-  // Total Amount Highlighted
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  // doc.setTextColor(70, 70, 70);
-  // doc.setFillColor(230, 230, 230);
-  doc.rect(totalLabelX - 6, y - 5, 65, 10, 'F');
-  doc.text(`Total Amount:`, totalLabelX, y + 3, { align: 'right' });
-  doc.text(`${invoice.grandTotal.toFixed(2)} (inr)`, totalValueX, y + 3, { align: 'right' });
-  doc.setFont('helvetica', 'normal');
-  y += 18;
+// Highlighted Total Amount Row
+const highlightY = y - 4; // Start rectangle a bit above text
+const highlightWidth = pageWidth - marginX * 2;
+doc.setFillColor(230, 230, 230);
+doc.rect(marginX, highlightY, highlightWidth, highlightHeight, 'F'); // Highlight full row
+
+doc.setFontSize(12);
+doc.setFont('helvetica', 'bold');
+doc.setTextColor(44, 44, 44);
+doc.text('Total Amount:', totalLabelX, y + 3, { align: 'right' });
+doc.text(`${invoice.grandTotal.toFixed(2)} (inr)`, totalValueX, y + 3, { align: 'right' });
+
+// Reset font and color for further content
+doc.setFont('helvetica', 'normal');
+doc.setTextColor(44, 44, 44);
+y += highlightHeight + 6; // Move y for next section
+
 
   // --- AMOUNT IN WORDS ---
   doc.setFont('helvetica', 'bold');
