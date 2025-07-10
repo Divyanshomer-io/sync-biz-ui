@@ -54,8 +54,27 @@ const SalesInvoiceList: React.FC<SalesInvoiceListProps> = ({
   title = "Sales Invoices"
 }) => {
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
-const [showPreviewModal, setShowPreviewModal] = useState(false);
- const { profile } = useAuth();
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const { profile } = useAuth();
+
+const formatINR = (value: number) =>
+  `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+const amountInWords = (num: number) => {
+  const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+    'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+    'Seventeen', 'Eighteen', 'Nineteen'];
+  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  const inWords = (n: number): string => {
+    if (n < 20) return a[n];
+    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? ' ' + a[n % 10] : '');
+    if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred ' + (n % 100 ? inWords(n % 100) : '');
+    if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand ' + inWords(n % 1000);
+    if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh ' + inWords(n % 100000);
+    return inWords(Math.floor(n / 10000000)) + ' Crore ' + inWords(n % 10000000);
+  };
+  return inWords(Math.floor(num)).trim() + ' Rupees Only';
+};
   const downloadInvoiceAsPDF = (invoice: Invoice) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
