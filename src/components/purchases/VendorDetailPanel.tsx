@@ -207,7 +207,7 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
         {/* KPI Metrics Cards */}
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Vendor Overview</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {metrics.map((metric, index) => (
               <MetricCard
                 key={index}
