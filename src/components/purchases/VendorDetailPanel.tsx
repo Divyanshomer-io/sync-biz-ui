@@ -11,6 +11,7 @@ import {
   Trash2,
   MoreVertical
 } from 'lucide-react';
+import { Calendar, CreditCard, DollarSign, Package } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -206,27 +207,55 @@ const VendorDetailPanel: React.FC<VendorDetailPanelProps> = ({ vendor, onBack })
       <main className="pt-16 pb-20 px-4 space-y-6">
         {/* KPI Metrics Cards */}
        {/* Purchase KPI Metrics */}
-<section className="space-y-4">
-  <h2 className="text-lg font-semibold text-foreground">Vendor Overview</h2>
+<div className="grid grid-cols-2 gap-3 sm:gap-4">
+  <Card className="glass-card">
+    <CardContent className="p-3 sm:p-4 text-center">
+      <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
+        ₹{(vendor.totalPurchases || 0).toLocaleString("en-IN")}
+      </div>
+      <div className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1">
+        <Package className="w-3 h-3" />
+        Total Purchases
+      </div>
+    </CardContent>
+  </Card>
 
-  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-    {metrics.map((metric, index) => (
-      <Card key={index} className="glass-card">
-        <CardContent className="p-3 sm:p-4 text-center">
-          <MetricCard
-            title={metric.title}
-            value={metric.value}
-            change={metric.change}
-            trend={metric.trend}
-            icon={metric.icon}
-            color={metric.color}
-            isEmpty={metric.isEmpty}
-          />
-        </CardContent>
-      </Card>
-    ))}
-  </div>
-</section>
+  <Card className="glass-card">
+    <CardContent className="p-3 sm:p-4 text-center">
+      <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
+        ₹{(vendor.totalPaid || 0).toLocaleString("en-IN")}
+      </div>
+      <div className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1">
+        <CreditCard className="w-3 h-3" />
+        Payments Made
+      </div>
+    </CardContent>
+  </Card>
+
+  <Card className="glass-card">
+    <CardContent className="p-3 sm:p-4 text-center">
+      <div className={`text-xl sm:text-2xl font-bold ${(vendor.pending || 0) > 0 ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>
+        ₹{(vendor.pending || 0).toLocaleString("en-IN")}
+      </div>
+      <div className={`text-xs sm:text-sm flex items-center justify-center gap-1 ${(vendor.pending || 0) > 0 ? "text-red-600/80 dark:text-red-400/80" : "text-muted-foreground/80"}`}>
+        <CreditCard className="w-3 h-3" />
+        Outstanding
+      </div>
+    </CardContent>
+  </Card>
+
+  <Card className="glass-card">
+    <CardContent className="p-3 sm:p-4 text-center">
+      <div className="text-xl sm:text-2xl font-bold text-primary">
+        ₹{recentPurchaseAmount.toLocaleString("en-IN")}
+      </div>
+      <div className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1">
+        <Calendar className="w-3 h-3" />
+        This Month
+      </div>
+    </CardContent>
+  </Card>
+</div>
 
 
 
