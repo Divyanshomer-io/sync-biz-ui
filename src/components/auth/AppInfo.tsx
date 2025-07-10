@@ -5,7 +5,7 @@ import {
   ArrowLeft,
   Info,
   User,
-  Linkedin,
+  LinkedinIcon,
   Mail,
   Shield,
   Target,
@@ -39,50 +39,42 @@ const AppInfo: React.FC<AppInfoProps> = ({ onBack }) => {
         </div>
 
         {/* Developer Information */}
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5 text-primary" />
-              Developer Information
-            </CardTitle>
-            <CardDescription>
-              Meet the creator behind BizTrack
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <User className="w-4 h-4 text-primary" />
-                <span className="font-medium">Name:</span>
-                <span>Divyanshu Lila</span>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <Linkedin className="w-4 h-4 text-primary" />
-                <span className="font-medium">LinkedIn:</span>
-                <a 
-                  href="https://www.linkedin.com/in/divyanshu-lila" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  www.linkedin.com/in/divyanshu-lila
-                </a>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-primary" />
-                <span className="font-medium">Email:</span>
-                <a 
-                  href="mailto:divyanshulila11@gmail.com"
-                  className="text-primary hover:underline"
-                >
-                  divyanshulila11@gmail.com
-                </a>
-              </div>
-            </div>
-          </CardContent>
+       <CardContent className="space-y-4">
+  <div className="space-y-3">
+    {/* Name */}
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-base break-words">
+      <User className="w-4 h-4 text-primary shrink-0" />
+      <span className="font-medium">Name:</span>
+      <span className="truncate max-w-[200px] sm:max-w-none">Divyanshu Lila</span>
+    </div>
+
+    {/* LinkedIn */}
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-base break-words">
+      <LinkedinIcon className="w-4 h-4 text-primary shrink-0" />
+      <span className="font-medium">LinkedIn:</span>
+      <a
+        href="https://www.linkedin.com/in/divyanshu-lila"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary hover:underline truncate max-w-[200px] sm:max-w-none"
+      >
+        www.linkedin.com/in/divyanshu-lila
+      </a>
+    </div>
+
+    {/* Email */}
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-base break-words">
+      <Mail className="w-4 h-4 text-primary shrink-0" />
+      <span className="font-medium">Email:</span>
+      <a
+        href="mailto:divyanshulila11@gmail.com"
+        className="text-primary hover:underline truncate max-w-[200px] sm:max-w-none"
+      >
+        divyanshulila11@gmail.com
+      </a>
+    </div>
+  </div>
+</CardContent>
         </Card>
 
         {/* App Information */}
