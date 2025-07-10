@@ -79,160 +79,191 @@ const amountInWords = (num: number) => {
 const downloadInvoiceAsPDF = (invoice, profile) => {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
-  const brandColor = [34, 49, 63]; // Brand color for header
 
-  // --- HEADER ---
-  doc.setFillColor(...brandColor);
-  doc.rect(0, 0, pageWidth, 60, 'F');
+  // --- HEADER: Title & Company Info ---
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(255);
   doc.setFontSize(28);
-  doc.text('INVOICE', 40, 40);
+  doc.setTextColor(34, 49, 63); // Brand color
+  doc.text("INVOICE", pageWidth / 2, 40, { align: "center" });
 
-  // Logo (optional)
-  if (profile?.logoUrl) {
-    doc.addImage(profile.logoUrl, 'PNG', pageWidth - 110, 15, 70, 35);
+  // Company Info Centered
+  let y = 60;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(60, 60, 60);
+  doc.text(profile?.organization_name || 'N/A', pageWidth / 2, y, { align: "center" });
+  y += 16;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  if (profile?.phone) {
+    doc.text(`Phone: ${profile.phone}`, pageWidth / 2, y, { align: "center" });
+    y += 12;
+  }
+  if (profile?.gst_number) {
+    doc.text(`GST: ${profile.gst_number}`, pageWidth / 2, y, { align: "center" });
+    y += 12;
+  }
+  if (profile?.business_type) {
+    doc.text(`Business Type: ${profile.business_type}`, pageWidth / 2, y, { align: "center" });
+    y += 12;
+  }
+  if (profile?.address) {
+    doc.text(profile.address, pageWidth / 2, y, { align: "center" });
+    y += 12;
   }
 
-  // --- BUSINESS INFO (LEFT) & INVOICE META (RIGHT) ---
+  // --- Divider ---
+  y += 8;
+  doc.setDrawColor(180, 180, 180);
+  doc.setLineWidth(1);
+  doc.line(40, y, pageWidth - 40, y);
+  y += 16;
+
+  // --- Invoice & Customer Details ---
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Invoice #:`, 40, y);
+  doc.setFont('courier', 'bold');
+  doc.text(`${invoice.id}`, 110, y);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(0);
-  let y = 80;
-  doc.text(profile?.organization_name || 'N/A', 40, y);
-  doc.text(profile?.address || 'N/A', 40, y + 15);
-  doc.text(`Phone: ${profile?.phone || 'N/A'}`, 40, y + 30);
-  doc.text(`GST: ${profile?.gst_number || 'N/A'}`, 40, y + 45);
+  doc.text(`Date:`, pageWidth/2, y);
+  doc.setFont('courier', 'bold');
+  doc.text(`${new Date(invoice.date).toLocaleDateString('en-IN')}`, pageWidth/2 + 35, y);
+  y += 14;
+  doc.setFont('helvetica', 'normal');
+  doc.text("Bill To:", 40, y);
+  doc.setFont('courier', 'bold');
+  doc.text(`${invoice.customerName || 'N/A'}`, 110, y);
+  doc.setFont('helvetica', 'normal');
+  y += 18;
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Invoice #: ', pageWidth - 220, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(invoice.id || 'N/A', pageWidth - 120, y);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Invoice Date: ', pageWidth - 220, y + 15);
-  doc.setFont('helvetica', 'normal');
-  doc.text(new Date(invoice.date).toLocaleDateString('en-IN'), pageWidth - 120, y + 15);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Due Date: ', pageWidth - 220, y + 30);
-  doc.setFont('helvetica', 'normal');
-  doc.text(invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-IN') : 'N/A', pageWidth - 120, y + 30);
+  // --- Items Table with Monospaced Numbers ---
+  const tableColumn = [
+    { header: "Item", dataKey: "name" },
+    { header: "Qty", dataKey: "quantity" },
+    { header: "Unit", dataKey: "unit" },
+    { header: "Rate (₹)", dataKey: "rate" },
+    { header: "Amount (₹)", dataKey: "amount" }
+  ];
+  const tableRows = invoice.items.map(item => ({
+    name: item.name,
+    quantity: String(item.quantity),
+    unit: item.unit || '',
+    rate: item.rate.toFixed(2),
+    amount: item.amount.toFixed(2)
+  }));
 
-  // --- BILL TO / BILL FROM (DUAL COLUMN) ---
-  y += 60;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text('Bill To:', 40, y);
-  doc.text('Bill From:', pageWidth / 2 + 10, y);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11);
-  doc.text(invoice.customerName || 'N/A', 40, y + 18);
-  doc.text(`Phone: ${invoice.customerPhone || 'N/A'}`, 40, y + 33);
-  doc.text(profile?.organization_name || 'N/A', pageWidth / 2 + 10, y + 18);
-  doc.text(`Phone: ${profile?.phone || 'N/A'}`, pageWidth / 2 + 10, y + 33);
-  doc.text(`GST: ${profile?.gst_number || 'N/A'}`, pageWidth / 2 + 10, y + 48);
-
-  // --- ITEMS TABLE (NUMBERS IN COURIER) ---
-  y += 60;
-  const tableRows = invoice.items.map((item, idx) => [
-    `${idx + 1}`,
-    item.name,
-    item.unit || '',
-    `${item.quantity}`,
-    formatINR(item.rate),
-    formatINR(item.amount),
-  ]);
   autoTable(doc, {
     startY: y,
-    head: [['#', 'Description', 'Unit', 'Qty', 'Rate', 'Amount']],
-    body: tableRows,
+    head: [tableColumn.map(col => col.header)],
+    body: tableRows.map(row => tableColumn.map(col => row[col.dataKey])),
     theme: 'grid',
-    styles: {
-      fontSize: 11,
-      cellPadding: 4,
-      valign: 'middle',
-    },
     headStyles: {
-      fillColor: brandColor,
+      fillColor: [34, 49, 63],
       textColor: 255,
       fontStyle: 'bold',
+      halign: 'center'
     },
-    alternateRowStyles: { fillColor: [245, 245, 245] },
+    styles: {
+      fontSize: 10,
+      cellPadding: 4,
+      valign: 'middle'
+    },
     columnStyles: {
-      0: { cellWidth: 30, halign: 'center', font: 'courier', fontStyle: 'bold' },
-      1: { cellWidth: 170, halign: 'left' },
-      2: { cellWidth: 50, halign: 'center', font: 'courier' },
-      3: { cellWidth: 50, halign: 'center', font: 'courier' },
-      4: { cellWidth: 70, halign: 'right', font: 'courier', fontStyle: 'bold' },
-      5: { cellWidth: 80, halign: 'right', font: 'courier', fontStyle: 'bold' },
+      0: { halign: 'left' },
+      1: { halign: 'center', font: 'courier', fontStyle: 'bold' },
+      2: { halign: 'center' },
+      3: { halign: 'right', font: 'courier', fontStyle: 'bold' },
+      4: { halign: 'right', font: 'courier', fontStyle: 'bold' }
     },
     didDrawCell: (data) => {
-      // Apply courier font for all number cells
-      if (
-        data.column.index === 0 ||
-        data.column.index === 3 ||
-        data.column.index === 4 ||
-        data.column.index === 5
-      ) {
+      // Monospaced font for numbers
+      if ([1, 3, 4].includes(data.column.index)) {
         data.cell.styles.font = 'courier';
         data.cell.styles.fontStyle = 'bold';
       }
     },
     didDrawPage: function (data) {
-      y = data.cursor.y + 20;
-    },
+      y = data.cursor.y + 16;
+    }
   });
 
-  // --- TOTALS BOX (NUMBERS IN COURIER) ---
-  doc.setFillColor(240, 240, 240);
-  doc.rect(pageWidth - 220, y, 180, 90, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('Subtotal', pageWidth - 210, y + 18);
-  doc.text('GST', pageWidth - 210, y + 36);
-  doc.text('Transport', pageWidth - 210, y + 54);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...brandColor);
-  doc.text('TOTAL DUE', pageWidth - 210, y + 72);
-
-  doc.setFont('courier', 'bold');
-  doc.setTextColor(0);
-  doc.text(formatINR(invoice.subtotal || 0), pageWidth - 60, y + 18, { align: 'right' });
-  doc.text(formatINR(invoice.gst_amount || 0), pageWidth - 60, y + 36, { align: 'right' });
-  doc.text(formatINR(invoice.transport_charges || 0), pageWidth - 60, y + 54, { align: 'right' });
-  doc.setTextColor(...brandColor);
-  doc.text(formatINR(invoice.grandTotal), pageWidth - 60, y + 72, { align: 'right' });
-  doc.setTextColor(0);
-
-  // --- AMOUNT IN WORDS ---
-  y += 110;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('Amount in Words:', 40, y);
-  doc.setFont('courier', 'italic');
-  const words = doc.splitTextToSize(amountInWords(invoice.grandTotal), pageWidth - 80);
-  doc.text(words, 40, y + 16);
-
-  // --- TRANSPORT DETAILS (BOXED) ---
-  y += words.length * 12 + 24;
-  doc.setDrawColor(180);
-  doc.setLineWidth(0.5);
-  doc.rect(40, y, pageWidth - 80, 60, 'S');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('Transport Details:', 50, y + 15);
+  // --- Totals Section (Boxed, Monospaced) ---
+  doc.setDrawColor(220, 220, 220);
+  doc.setFillColor(245, 245, 245);
+  doc.rect(pageWidth - 210, y, 170, 70, 'F');
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.text(`Company: ${invoice.transport_company || 'N/A'}`, 50, y + 30);
-  doc.text(`Truck Number: ${invoice.truck_number || 'N/A'}`, 200, y + 30);
-  doc.text(`Driver Contact: ${invoice.driver_contact || 'N/A'}`, 400, y + 30);
 
-  // --- FOOTER (THANK YOU) ---
+  const labelX = pageWidth - 200;
+  const valueX = pageWidth - 50;
+  let ty = y + 16;
+
+  const drawTotalRow = (label, value, bold = false, color = null) => {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    if (color) doc.setTextColor(...color); else doc.setTextColor(0, 0, 0);
+    doc.text(label, labelX, ty, { align: 'left' });
+    doc.setFont('courier', 'bold');
+    doc.text(`₹${value}`, valueX, ty, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    ty += 14;
+  };
+
+  drawTotalRow('Subtotal:', (invoice.subtotal || 0).toFixed(2));
+  drawTotalRow('GST Amount:', (invoice.gst_amount || 0).toFixed(2));
+  drawTotalRow('Transport:', (invoice.transport_charges || 0).toFixed(2));
+  drawTotalRow('TOTAL:', invoice.grandTotal.toFixed(2), true, [34, 49, 63]);
+
+  y = Math.max(y + 70, ty);
+
+  // --- Payment Status ---
+  y += 12;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text(`Payment Status:`, 40, y);
+  doc.setFont('courier', 'bold');
+  doc.text(`${invoice.status.toUpperCase()}`, 140, y);
+  y += 14;
+  if (invoice.paidAmount) {
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Paid Amount:`, 40, y);
+    doc.setFont('courier', 'bold');
+    doc.text(`₹${invoice.paidAmount.toFixed(2)}`, 140, y);
+    y += 14;
+  }
+
+  // --- Transport Details ---
+  y += 8;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text("Transport Details:", 40, y);
+  y += 12;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Company: ${invoice.transport_company || 'N/A'}`, 40, y); y += 12;
+  doc.text(`Truck Number: ${invoice.truck_number || 'N/A'}`, 40, y); y += 12;
+  doc.text(`Driver Contact: ${invoice.driver_contact || 'N/A'}`, 40, y); y += 12;
+
+  // --- Notes Section ---
+  y += 8;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text("Notes:", 40, y);
+  y += 12;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  const splitNotes = doc.splitTextToSize(invoice.delivery_notes || 'N/A', pageWidth - 80);
+  doc.text(splitNotes, 40, y);
+
+  // --- Footer ---
   doc.setFont('helvetica', 'italic');
-  doc.setFontSize(9);
-  doc.text('Thank you for your business!', pageWidth / 2, doc.internal.pageSize.getHeight() - 30, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setTextColor(120, 120, 120);
+  doc.text("Thank you for your business!", pageWidth / 2, doc.internal.pageSize.getHeight() - 30, { align: "center" });
 
-  // --- SAVE FILE ---
   doc.save(`invoice-${invoice.id}.pdf`);
 };
 
