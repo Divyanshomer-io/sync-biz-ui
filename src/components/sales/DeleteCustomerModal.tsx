@@ -62,7 +62,7 @@ const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
           <DialogDescription>
             {hasTransactions ? (
               <div className="space-y-2">
-                <p>Cannot delete this customer because they have associated transactions:</p>
+                <p>this customer have below mentioned associated transactions:</p>
                 <ul className="list-disc list-inside text-sm space-y-1">
                   {customerSales.length > 0 && (
                     <li>{customerSales.length} sales record(s)</li>
@@ -71,9 +71,9 @@ const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
                     <li>{customerPayments.length} payment record(s)</li>
                   )}
                 </ul>
-                <p className="text-xs text-muted-foreground mt-2">
+{/*                 <p className="text-xs text-muted-foreground mt-2">
                   Remove all associated transactions before deleting the customer.
-                </p>
+                </p> */}
               </div>
             ) : (
               <p>
