@@ -15,7 +15,8 @@ CREATE TABLE public.customers (
 -- Create sales table
 CREATE TABLE public.sales (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  customer_id UUID REFERENCES public.customers(id) ON DELETE NULL,
+  customer_id UUID,
+  FOREIGN KEY (customer_id) REFERENCES public.customers(id) ON DELETE NULL,
   item_name TEXT NOT NULL,
   quantity NUMERIC NOT NULL,
   unit TEXT NOT NULL,
@@ -36,7 +37,8 @@ CREATE TABLE public.sales (
 -- Create payments table
 CREATE TABLE public.payments (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  customer_id UUID REFERENCES public.customers(id) ON DELETE NULL,
+  customer_id UUID, 
+  FOREIGN KEY (customer_id) REFERENCES public.customers(id) ON DELETE NULL,
   amount_paid NUMERIC NOT NULL,
   payment_mode TEXT DEFAULT 'cash',
   payment_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
