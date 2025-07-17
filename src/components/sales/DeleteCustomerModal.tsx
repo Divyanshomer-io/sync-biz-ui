@@ -36,20 +36,20 @@ const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
 
   const hasTransactions = customerSales.length > 0 || customerPayments.length > 0;
 
-  const handleDelete = async () => {
-    if (!customer || hasTransactions) return;
-    
-    setIsDeleting(true);
-    try {
-      await deleteCustomer(customer.id);
-      onDeleted();
-      onClose();
-    } catch (error) {
-      console.error('Error deleting customer:', error);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+ const handleDelete = async () => {
+  if (!customer) return;
+  
+  setIsDeleting(true);
+  try {
+    await deleteCustomer(customer.id);
+    onDeleted();
+    onClose();
+  } catch (error) {
+    console.error('Error deleting customer:', error);
+  } finally {
+    setIsDeleting(false);
+  }
+};
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -77,9 +77,10 @@ const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
               </div>
             ) : (
               <p>
-                Are you sure you want to delete <strong>{customer?.name}</strong>? 
-                This action cannot be undone.
-              </p>
+  Are you sure you want to delete <strong>{customer?.name}</strong>? <br />
+  This action cannot be undone. Associated transactions will remain, but without a customer linked.
+</p>
+
             )}
           </DialogDescription>
         </DialogHeader>
@@ -93,7 +94,7 @@ const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
           >
             Cancel
           </Button>
-          {!hasTransactions && (
+          
             <Button 
               variant="destructive" 
               onClick={handleDelete}
@@ -101,7 +102,7 @@ const DeleteCustomerModal: React.FC<DeleteCustomerModalProps> = ({
             >
               {isDeleting ? 'Deleting...' : 'Delete Customer'}
             </Button>
-          )}
+          
         </div>
       </DialogContent>
     </Dialog>
